@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>arachne · a provable crawl of the crypto web</title>
+<meta name="description" content="Real browsers crawl the crypto web. What is new gets hashed, sealed under a merkle root, and pretrains NEPHILA.">
+<meta property="og:title" content="arachne · a provable crawl of the crypto web">
+<meta property="og:description" content="every page she reads becomes a thread you can verify.">
+<meta property="og:image" content="og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307090b'/%3E%3Cg stroke='%23e9eef0' stroke-width='1.6' fill='none' stroke-linecap='round'%3E%3Cpath d='M16 16 7 8M16 16 5 13M16 16 5 19M16 16 7 25M16 16 25 8M16 16 27 13M16 16 27 19M16 16 25 25'/%3E%3C/g%3E%3Cellipse cx='16' cy='18' rx='4.2' ry='5.2' fill='%23e9eef0'/%3E%3Ccircle cx='16' cy='11.5' r='2.6' fill='%23e9eef0'/%3E%3Ccircle cx='16' cy='19' r='1.8' fill='%23ff7a2f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#07090b; --panel:#0c1014; --panel2:#0a0d10; --line:#1c242b; --line2:#2a343d;
+  --text:#e9eef0; --dim:#7b8893; --mute:#9aa6af; --silk:#c9d3d8;
+  --ember:#ff7a2f; --ok:#6ee7a8; --warn:#f2c14e; --seen:#5f6b75;
+  --serif:'Instrument Serif','Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 12.5px/1.55 var(--mono);overflow:hidden;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+a{color:inherit}
+button,input{font:inherit;color:inherit}
+::selection{background:var(--ember);color:#07090b}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+em{font-style:italic;color:var(--ember)}
+.app{display:grid;grid-template-rows:42px minmax(0,1fr);height:100vh;height:100dvh}
+
+/* top bar */
+.bar{display:flex;align-items:center;gap:14px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--bg);min-width:0}
+.brand{display:flex;align-items:center;gap:8px;color:var(--ember);font-weight:700;text-decoration:none;white-space:nowrap}
+.brand svg{width:20px;height:20px;display:block}
+nav.main{display:flex;gap:2px;min-width:0;overflow-x:auto;scrollbar-width:none}
+nav.main::-webkit-scrollbar{display:none}
+nav.main a{display:flex;align-items:center;padding:0 10px;min-height:28px;border-radius:6px;color:var(--dim);text-decoration:none;white-space:nowrap}
+nav.main a:hover{color:var(--text)}
+nav.main a.on{background:#ded8cb;color:#07090b;background:var(--silk)}
+.stat{margin-left:auto;display:flex;align-items:center;gap:16px;color:var(--dim);white-space:nowrap}
+.stat b{color:var(--text);font-weight:700}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--dim);margin-right:6px;vertical-align:1px}
+.dot.on{background:var(--ember);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 6px rgba(255,122,47,0)}0%{box-shadow:0 0 0 0 rgba(255,122,47,.55)}}
+.tb{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:28px;padding:0 11px;border:1px solid var(--line2);border-radius:6px;background:transparent;color:var(--text);text-decoration:none;cursor:pointer;white-space:nowrap}
+.tb:hover{border-color:var(--ember);color:var(--ember)}
+.tb.off{opacity:.38;pointer-events:none}
+.tb.go{background:var(--ember);border-color:var(--ember);color:#07090b;font-weight:700}
+.tb.go:hover{color:#07090b;filter:brightness(1.1)}
+
+/* views */
+.view{display:none;min-height:0;min-width:0;overflow:auto;height:100%}
+main{min-height:0;min-width:0;overflow:hidden}
+.view.on{display:block}
+.ph{display:flex;align-items:baseline;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--dim);font-size:11px;letter-spacing:.06em}
+.ph b{color:var(--silk);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.ph .sp{margin-left:auto;text-align:right;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ph b{white-space:nowrap}
+.demo{display:inline-flex;align-items:center;gap:6px;color:var(--warn);font-size:10px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.demo::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.col{min-width:0;border-right:1px solid var(--line);min-height:0;overflow:auto}
+.col:last-child{border-right:0}
+.pad{padding:12px}
+.note{color:var(--dim);margin:0 0 12px}
+.note b{color:var(--text)}
+input.f{width:100%;min-height:40px;padding:0 12px;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);font-size:12.5px}
+input.f::placeholder{color:#55616b}
+.btnp{min-height:40px;padding:0 16px;border:0;border-radius:6px;background:var(--ember);color:#07090b;font-weight:700;cursor:pointer}
+.btnp:hover{filter:brightness(1.1)}
+.btnl{min-height:36px;padding:0 12px;border:1px solid var(--line2);border-radius:6px;background:transparent;cursor:pointer}
+.btnl:hover{border-color:var(--ember);color:var(--ember)}
+.btnl[aria-pressed=true]{border-color:var(--ember);color:var(--ember)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{color:var(--dim);font-weight:400;font-size:10.5px;text-align:left;padding:7px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 12px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.n,th.n{text-align:right}
+td.u{color:var(--dim);max-width:230px}
+tr.cur td{background:rgba(255,122,47,.07)}
+.s{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--seen)}
+.s.rd{background:var(--ember)}
+.tbl{overflow:auto}
+code{font-family:var(--mono);color:var(--silk)}
+
+/* web view */
+#v-web.on{display:grid;grid-template-columns:minmax(400px,41%) minmax(0,1fr);overflow:hidden}
+.left{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line);overflow:hidden}
+.hero{padding:12px 24px 0;flex:none;position:relative;z-index:2}
+h1{margin:0;font:italic 400 clamp(54px,5.2vw,78px)/.95 var(--serif);letter-spacing:-.01em}
+.tag{margin:6px 0 0;font:400 clamp(18px,1.6vw,23px)/1.2 var(--serif);color:var(--silk);text-wrap:balance;max-width:20em}
+.sub{margin:10px 0 0;max-width:34em;color:var(--dim)}
+.sub b{color:var(--text)}
+.stats{display:flex;gap:28px;margin:12px 0 0;padding:0}
+.stats div{display:flex;flex-direction:column;gap:2px}
+.stats dd{margin:0;font:400 26px/1 var(--serif);font-variant-numeric:tabular-nums}
+.stats dt{order:2;color:var(--dim);font-size:11px}
+.ca{display:flex;align-items:center;gap:10px;margin:12px 0 0;padding:6px 6px 6px 12px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);max-width:560px}
+.ca small{color:var(--ember);letter-spacing:.08em}
+.ca code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ca code.empty{color:var(--dim)}
+.webwrap{position:relative;flex:1 1 0;min-height:260px;margin-top:-64px;pointer-events:none}
+#web-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.wleg{position:absolute;left:24px;bottom:4px;display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--dim);font-size:10.5px;pointer-events:none}
+.wleg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.nest{flex:none;border-top:1px solid var(--line)}
+.nbar{display:flex;gap:14px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--line);color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden}
+.nbar b{color:var(--text);font-weight:500}
+.meter{display:inline-block;width:92px;height:7px;border:1px solid var(--line2);vertical-align:-1px;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--ember);width:0}
+.nest .tbl{max-height:128px}
+.nest th{background:#d6d1c6;background:var(--silk);color:#07090b;padding:4px 12px}
+
+.right{display:grid;grid-template-rows:minmax(0,1fr) auto 190px;min-width:0;min-height:0;overflow:hidden}
+.scanhd{display:flex;align-items:baseline;gap:10px;padding:0 12px;min-height:34px;border-bottom:1px solid var(--line);color:var(--dim);white-space:nowrap;overflow:hidden}
+.scanhd .nm{color:var(--ember);font-weight:700}
+.scanhd .u{color:var(--silk);overflow:hidden;text-overflow:ellipsis}
+.scanbox{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
+.scan{display:grid;grid-template-columns:minmax(0,1fr) 224px;min-height:0}
+.pagewrap{position:relative;overflow:hidden;padding:20px 22px;min-height:0}
+.pageinner{position:relative;max-width:620px;margin:0 auto}
+.blk{position:relative;margin:0 0 14px;padding:12px 14px;border:1px solid transparent;color:var(--seen);transition:opacity .25s,color .25s,background .25s;opacity:.32}
+.blk::before,.blk::after{content:"";position:absolute;width:7px;height:7px;border:0 solid rgba(255,255,255,.2)}
+.blk::before{left:-1px;top:-1px;border-width:1px 0 0 1px}
+.blk::after{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
+.blk.rd{opacity:1}
+.blk.nw{background:rgba(110,231,168,.06)}
+.blk.nw::before,.blk.nw::after{border-color:rgba(110,231,168,.55)}
+.blk.h{font:400 28px/1.12 var(--serif);color:var(--text);padding-block:14px}
+.blk .lb{position:absolute;right:6px;top:-9px;padding:0 6px;background:var(--bg);color:var(--dim);font-size:9.5px;letter-spacing:.08em}
+.blk.nw .lb{color:var(--ok)}
+.blk .w{padding:1px 0}
+.blk .w.nw{color:#bdf5d6}
+.blk .w.sn{color:var(--seen)}
+.blk .w.pl{color:var(--mute)}
+.blk .w.k{background:rgba(242,193,78,.2);color:var(--warn);border-radius:2px}
+.blk.h .w{color:inherit}
+.lnks{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0;opacity:.32;transition:opacity .25s}
+.lnks.rd{opacity:1}
+.lk{padding:2px 8px;border:1px solid rgba(255,122,47,.5);border-radius:4px;color:var(--ember);font-size:11px;overflow-wrap:anywhere}
+.lk.kn{border-color:var(--line2);color:var(--dim)}
+.sline{position:absolute;left:0;right:0;height:0;border-top:1px solid var(--ember);box-shadow:0 -22px 26px rgba(255,122,47,.10);background:none;pointer-events:none;z-index:2}
+.sline::before{content:"";position:absolute;left:0;right:0;top:-34px;height:34px;background:linear-gradient(rgba(255,122,47,0),rgba(255,122,47,.14))}
+.sline span{position:absolute;right:0;top:-15px;padding:0 4px;background:var(--bg);color:var(--ember);font-size:10px;letter-spacing:.06em}
+.idle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);text-align:center;padding:20px}
+.side{border-left:1px solid var(--line);padding:12px 14px;overflow:hidden;position:relative}
+.side h5{margin:12px 0 3px;color:var(--dim);font-size:10px;font-weight:400;letter-spacing:.12em;text-transform:uppercase}
+.side h5:first-child{margin-top:0}
+.side .v{color:var(--text);overflow-wrap:anywhere}
+.side .v.d{color:var(--dim)}
+.sf{opacity:.18;transition:opacity .35s}
+.sf.on{opacity:1}
+.bar2{height:5px;background:var(--line);margin-top:5px}
+.bar2 i{display:block;height:100%;width:0;background:var(--ok)}
+.bar2.o i{background:var(--warn)}
+.kt{display:flex;flex-wrap:wrap;gap:4px}
+.kt span{padding:0 6px;border:1px solid var(--line2);color:var(--silk);font-size:11px}
+.kt span em{color:var(--ember);font-style:normal}
+.thumb{position:absolute;right:12px;bottom:12px;width:132px;z-index:3;border:1px solid var(--line2);background:#05070a}
+.thumb small{display:block;padding:2px 6px;color:var(--dim);font-size:9.5px;border-bottom:1px solid var(--line)}
+.thumb canvas{display:block;width:100%;height:78px}
+.cap{padding:8px 12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cap.k{color:var(--ok)}.cap.d{color:var(--ember)}
+.cap b{color:inherit}
+.logbox{display:flex;flex-direction:column;min-height:0}
+.logbox .hd{padding:7px 12px;color:var(--silk);font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:flex;gap:10px}
+.logbox .hd span{margin-left:auto;color:var(--dim);letter-spacing:0;text-transform:none}
+.log{overflow:auto;min-height:0}
+.ln{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;width:100%;padding:3px 12px;border:0;background:none;text-align:left;cursor:default;align-items:baseline}
+button.ln{cursor:pointer}
+button.ln:hover{background:rgba(255,122,47,.07)}
+.ln .a{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln.k .t{color:var(--text)}
+.ln.k .r{color:var(--ok)}
+.ln.d .t{color:var(--dim)}
+.ln.d .r{color:var(--ember)}
+.ln .r{text-align:right;white-space:nowrap}
+.emp{padding:14px 12px;color:var(--dim)}
+
+/* spiders wall */
+#v-spiders.on{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));overflow:hidden}
+.intro{padding:12px;color:var(--dim);background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.scr{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0;min-height:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:#05070a}
+.scr canvas{width:100%;height:100%;display:block;min-height:0}
+.scr .cp{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-top:1px solid var(--line);background:var(--panel2);white-space:nowrap;overflow:hidden}
+.scr .cp b{color:var(--text)}
+.scr .cp i{font-style:normal;color:var(--ember)}
+.scr .cp i.z{color:var(--dim)}
+.scr .cp span{color:var(--dim);margin-left:auto;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* model */
+#v-model.on{display:grid;grid-template-columns:1fr 1fr 1fr;overflow:hidden}
+.stg{list-style:none;margin:0;padding:6px 12px}
+.stg li{display:grid;grid-template-columns:18px 78px minmax(0,1fr);gap:6px;padding:4px 0;color:var(--dim)}
+.stg li b{font-weight:400;color:var(--silk)}
+.chs{padding:4px 12px 12px}
+.chs div{display:grid;grid-template-columns:84px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:4px 0}
+.chs i{display:block;height:6px;background:var(--line)}
+.chs span{color:var(--dim);text-align:right;white-space:nowrap}
+.askrow{display:flex;gap:8px;padding:12px}
+.ans{padding:0 12px 12px}
+.ans blockquote{margin:0 0 12px;padding:0 0 12px;border-bottom:1px solid var(--line);font:400 17px/1.3 var(--serif);color:var(--silk)}
+.ans blockquote small{display:block;margin-top:6px;font:400 11px/1.4 var(--mono);color:var(--dim)}
+.ans button{padding:0;border:0;background:none;color:var(--ember);text-decoration:underline;cursor:pointer}
+.bm{padding:8px 12px 0}
+.bm div{display:grid;grid-template-columns:70px minmax(0,1fr) 110px;gap:10px;align-items:center;padding:7px 0}
+.bm i{display:block;height:7px;background:var(--line)}
+.bm i s{display:block;height:100%;background:var(--ember);text-decoration:none}
+.bm span{text-align:right;color:var(--dim);white-space:nowrap}
+.rule{padding:0 12px 12px;color:var(--dim)}
+.rule code{display:block;margin:6px 0;overflow-wrap:anywhere}
+.hold{padding:0 12px 14px;color:var(--dim)}
+.hold div.r{display:grid;grid-template-columns:54px 82px 1fr 64px;gap:8px;padding:2px 0}
+.hold span{white-space:nowrap}
+.hold .y{color:var(--ok)}
+
+/* atlas */
+#v-atlas.on{display:grid;grid-template-columns:1.15fr 1fr 1.05fr;overflow:hidden}
+.gcv{position:relative;height:calc(100% - 36px);min-height:260px}
+#atlas-cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+.tip{position:absolute;pointer-events:none;max-width:250px;padding:6px 9px;border:1px solid var(--line2);background:#05070a;font-size:11px;overflow-wrap:anywhere;z-index:2}
+.tip small{display:block;color:var(--dim)}
+.vb{display:grid;grid-template-columns:minmax(0,104px) minmax(0,1fr) 34px;gap:10px;align-items:center;padding:5px 12px}
+.vb i{display:block;height:7px;background:var(--line)}
+.vb s{display:block;height:100%;background:var(--warn);text-decoration:none}
+.vb span:last-child{text-align:right;color:var(--dim)}
+.yb{display:inline-block;width:62px;height:6px;background:var(--line);vertical-align:1px;margin-right:6px}
+.yb i{display:block;height:100%;background:var(--ok)}
+
+/* proof */
+#v-proof.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);overflow:hidden}
+.bar3{display:inline-block;height:6px;background:var(--ember);vertical-align:1px;margin-right:6px}
+.ep{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--dim);overflow-wrap:anywhere}
+.ep .btnl{min-height:24px;padding:0 9px;margin-left:8px;border-color:var(--ok);color:var(--ok)}
+.pick{display:flex;gap:8px;padding:12px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 10px}
+.chips .btnl{min-height:28px;padding:0 9px}
+.stp{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:6px 10px;padding:10px 12px;border-top:1px solid var(--line)}
+.stp .i{color:var(--dim)}
+.stp h4{margin:0 0 3px;font-size:12.5px;font-weight:700}
+.stp .d{color:var(--dim);overflow-wrap:anywhere}
+.stp .d code{color:var(--text)}
+.res{white-space:nowrap;font-weight:700}.res.ok{color:var(--ok)}.res.no{color:var(--ember)}
+.path{display:grid;gap:2px;margin-top:6px}
+.path div{display:flex;gap:10px}.path b{color:var(--ember);width:1.5em;flex:none}
+.recpre{margin:6px 0;padding:8px 10px;border:1px solid var(--line);background:var(--panel2);overflow-x:auto;white-space:pre;color:var(--silk)}
+.final{margin:0 12px 12px;padding:10px 12px;border:1px solid;font-weight:500}
+.final.ok{border-color:rgba(110,231,168,.4);color:var(--ok);background:rgba(110,231,168,.06)}
+.final.no{border-color:rgba(255,122,47,.45);color:var(--ember);background:rgba(255,122,47,.06)}
+
+/* spawn */
+#v-spawn.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);overflow:hidden}
+.spf{display:grid;gap:10px;max-width:420px;padding:0 12px}
+.spo{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px 12px;align-items:start}
+#sigil{width:98px;height:98px;display:block;border:1px solid var(--line2);background:var(--panel2)}
+.json{margin:0;padding:10px 12px;border:1px solid var(--line);background:var(--panel2);overflow-x:auto;white-space:pre;color:var(--silk)}
+.cmdl{display:flex;gap:8px;align-items:center;margin-top:10px}
+.cmdl code{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);background:var(--panel2);color:var(--ember);overflow-wrap:anywhere}
+.st-r{color:var(--ember)}.st-z{color:var(--dim)}
+
+/* roadmap */
+.road{max-width:1010px;margin:0 auto;padding:34px 20px 50px}
+.road>p{margin:0 0 22px;font:400 24px/1.25 var(--serif);color:var(--silk);max-width:24em}
+.rc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rcard{padding:14px;border:1px solid var(--line);border-top:2px solid var(--line2);background:var(--panel)}
+.rcard.nx{border-top-color:var(--ember)}
+.rcard .tp{display:flex;justify-content:space-between;color:var(--dim);font-size:10.5px;letter-spacing:.1em}
+.rcard .tp b{font-weight:400;color:var(--ember)}
+.rcard h3{margin:10px 0;padding-bottom:10px;border-bottom:1px solid var(--line);font:italic 400 28px/1 var(--serif)}
+.rcard ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;color:var(--mute)}
+.rcard li{padding-left:16px;position:relative}
+.rcard li::before{content:"·";position:absolute;left:3px;color:var(--dim)}
+.rcard.nx li::before{content:"→";color:var(--ember);left:0}
+.fund{margin-top:32px}
+.fund h2{margin:0 0 8px;font:italic 400 32px/1.1 var(--serif)}
+.fund p{margin:0;max-width:44em;color:var(--mute)}
+
+/* manual */
+.man{max-width:720px;margin:0 auto;padding:24px 20px 50px;white-space:pre-wrap;color:var(--mute);line-height:1.6}
+.man b{color:var(--text)}.man i{font-style:normal;color:var(--ember)}
+
+@media (max-width:1100px){
+  .rc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #v-model.on{grid-template-columns:1fr 1fr}
+  .stat .opt{display:none}
+}
+@media (max-width:900px){
+  .webwrap{margin-top:0}
+  body{overflow:auto;height:auto}
+  html{height:auto}
+  .app{display:block;height:auto}
+  .bar{position:sticky;top:0;z-index:20;flex-wrap:wrap;padding:6px 12px;row-gap:2px}
+  nav.main{order:3;width:100%;margin-inline:-6px}
+  nav.main a{min-height:44px;padding:0 12px}
+  .stat{display:none}
+  .bar .tb{min-height:44px;min-width:44px;padding:0 9px}
+  .bar .tools{margin-left:auto;display:flex;gap:6px}
+  main{overflow:visible}
+  .view{overflow:visible;height:auto}
+  .thumb{display:none}
+  #v-web.on,#v-spiders.on,#v-model.on,#v-atlas.on,#v-proof.on,#v-spawn.on{display:block;overflow:visible}
+  .left{border-right:0;overflow:visible}
+  .hero{padding:18px 16px 0}
+  .webwrap{height:min(100vw,440px);flex:none;min-height:0}
+  .wleg{left:16px;position:static;padding:0 16px 8px}
+  .nest .tbl{max-height:none}
+  .right{display:block}
+  .scan{grid-template-columns:minmax(0,1fr)}
+  .scanbox{display:block}
+  .pagewrap{min-height:360px;padding:16px 14px}
+  .side{border-left:0;border-top:1px solid var(--line);min-height:320px}
+  .logbox{max-height:300px}
+  .scr{height:230px}
+  .intro{padding:14px 16px}
+  .col{border-right:0;border-bottom:1px solid var(--line)}
+  .gcv{height:340px}
+  .rc{grid-template-columns:minmax(0,1fr)}
+  .road{padding:22px 16px 40px}
+  .ln{grid-template-columns:70px minmax(0,1fr) auto}
+  .stats{gap:22px;flex-wrap:wrap}
+  .ca{max-width:none}
+  .hold div.r{grid-template-columns:50px 74px 1fr 60px}
+  .chs div{grid-template-columns:76px minmax(0,1fr) 86px}
+  .chs span em{display:none}
+}
+@media (max-width:520px){
+  .stg li{grid-template-columns:18px 70px minmax(0,1fr)}
+  .spo{grid-template-columns:minmax(0,1fr)}
+  .stp{grid-template-columns:22px minmax(0,1fr)}
+  .stp .res{grid-column:2}
+  h1{font-size:64px}
+  td.u{max-width:140px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class="app">
+<div class="bar">
+  <a class="brand" href="#web" data-v="web" aria-label="arachne home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><g stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"><path d="M16 16 7 8M16 16 5 13M16 16 5 19M16 16 7 25M16 16 25 8M16 16 27 13M16 16 27 19M16 16 25 25"/></g><ellipse cx="16" cy="18" rx="4.2" ry="5.2" fill="currentColor"/><circle cx="16" cy="11.5" r="2.6" fill="currentColor"/><circle cx="16" cy="19" r="1.7" fill="#07090b"/></svg>
+    arachne
+  </a>
+  <nav class="main" aria-label="sections">
+    <a href="#web" data-v="web">web</a><a href="#spiders" data-v="spiders">spiders</a><a href="#model" data-v="model">nephila</a><a href="#atlas" data-v="atlas">atlas</a><a href="#proof" data-v="proof">proof</a><a href="#spawn" data-v="spawn">spawn</a><a href="#roadmap" data-v="roadmap">roadmap</a><a href="#man" data-v="man">manual</a>
+  </nav>
+  <div class="stat"><span><b>0/7</b> awake</span><span class="opt"><b>0</b> pages</span><span class="opt"><b>0</b> novel tok</span><span><i class="dot" id="live-dot"></i>offline · demo replay</span></div>
+  <div class="tools" style="display:flex;gap:6px;margin-left:10px">
+    <button class="tb" id="play" type="button" aria-pressed="true">replay: on</button>
+    <a class="tb" data-chart href="#" target="_blank" rel="noopener">chart</a>
+    <a class="tb go" data-buy href="#" target="_blank" rel="noopener">buy</a>
+    <a class="tb" data-x href="#" target="_blank" rel="noopener" aria-label="arachne on X">𝕏</a>
+  </div>
+</div>
+
+<main>
+<!-- WEB -->
+<section class="view on" id="v-web" aria-label="web">
+  <div class="left">
+    <div class="hero">
+      <h1>arachne</h1>
+      <p class="tag">every page she reads becomes a thread you can <em>verify</em>.</p>
+      <p class="sub">Real browsers crawl the crypto web. What is new gets hashed, sealed under a merkle root, and pretrains <b>NEPHILA</b>.</p>
+      <dl class="stats" aria-label="crawl counters"><div><dd>0</dd><dt>pages kept</dt></div><div><dd>0</dd><dt>novel tokens</dt></div><div><dd>0</dd><dt>hosts</dt></div><div><dd>0</dd><dt>kept / min</dt></div></dl>
+      <div class="ca"><small>CA</small><code id="ca-text" class="empty">drops at launch</code><button class="tb" id="ca-copy" type="button">copy</button></div>
+    </div>
+    <div class="webwrap"><canvas id="web-cv" aria-label="a web with spiders reading pages"></canvas>
+      <div class="wleg"><span><i style="background:var(--ok)"></i>kept</span><span><i style="background:var(--seen)"></i>read, dropped</span><span><i style="border:1.5px solid var(--ember)"></i>link not read yet</span><span class="demo">demonstration</span></div></div>
+    <div class="nest">
+      <div class="nbar"><span><b id="n-awake">0/7</b> spiders awake</span><span><b>0</b> urls queued</span><span>tokenizer <b>not trained</b></span><span style="margin-left:auto">epoch <i class="meter"><i id="ep-m"></i></i> <span id="ep-t">0/12</span></span></div>
+      <div class="tbl"><table><thead><tr><th>pid</th><th>spider</th><th>s</th><th>chapter</th><th class="n">pages</th><th class="n">novel</th><th class="n">rej</th><th>url</th></tr></thead><tbody id="tbody"></tbody></table></div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="scanbox">
+      <div class="scanhd"><i class="dot on"></i><span class="nm" id="s-sp">argiope</span><span id="s-meta"></span><span class="u" id="s-url"></span><span class="demo" style="margin-left:auto">demonstration</span></div>
+      <div class="scan">
+        <div class="pagewrap" id="pagewrap"><div class="pageinner" id="pageinner"></div><div class="sline" id="sline" hidden><span id="sl-t"></span></div><div class="idle" id="idle">a spider is on its way</div>
+<div class="thumb"><small>preview · sample</small><canvas id="thumb" width="264" height="156"></canvas></div></div>
+        <aside class="side" aria-label="page analysis">
+          <div class="sf" data-f="0"><h5>target</h5><div class="v" id="f-url"></div><div class="v d" id="f-title"></div></div>
+          <div class="sf" data-f="1"><h5>document</h5><div class="v" id="f-doc"></div></div>
+          <div class="sf" data-f="2"><h5>structure</h5><div class="v d" id="f-str"></div></div>
+          <div class="sf" data-f="3"><h5>novelty vs dataset</h5><div class="v" id="f-nov"></div><div class="bar2"><i id="f-novb"></i></div></div>
+          <div class="sf" data-f="4"><h5>relevance</h5><div class="v" id="f-rel"></div><div class="bar2 o"><i id="f-relb"></i></div></div>
+          <div class="sf" data-f="5"><h5>key terms</h5><div class="kt" id="f-kt"></div></div>
+          <div class="sf" data-f="6"><h5>links</h5><div class="v d" id="f-lk"></div></div>
+          <div class="sf" data-f="7"><h5>sha-256 of text</h5><div class="v d" id="f-sha"></div></div>
+          <div class="sf" data-f="8"><h5>verdict</h5><div class="v" id="f-ver"></div></div>
+        </aside>
+      </div>
+    </div>
+    <div class="cap" id="cap">the page as the spider parses it · green: new to the dataset · grey: already read · amber: links it will follow</div>
+    <div class="logbox"><div class="hd">thread log<span>sample receipts · click a kept page to verify it</span></div><div class="log" id="log"></div></div>
+  </div>
+</section>
+
+<!-- SPIDERS -->
+<section class="view" id="v-spiders" aria-label="spiders">
+  <div class="intro"><p style="margin:0 0 8px">The wall of screens streams from a running nest. This page replays a sample session, drawn in your browser from 12 sample pages.</p><span class="demo">demonstration</span></div>
+  <div id="wall" style="display:contents"></div>
+</section>
+
+<!-- NEPHILA -->
+<section class="view" id="v-model" aria-label="nephila">
+  <div class="col">
+    <div class="ph"><b>nephila · pipeline</b><span class="sp">stage done = artefact exists</span></div>
+    <ul class="stg" id="stg"></ul>
+    <div class="ph" style="border-top:1px solid var(--line)"><b>chapters</b><span class="sp">0 pages read</span></div>
+    <div class="chs" id="chs"></div>
+  </div>
+  <div class="col">
+    <div class="ph"><b>ask what she has read</b><span class="sp">retrieval with citations · no weights yet</span></div>
+    <form class="askrow" id="askf"><input class="f" id="askq" placeholder="how does the challenge window work?" autocomplete="off" spellcheck="false" aria-label="question"><button class="btnp" type="submit">ask</button></form>
+    <p class="note" style="padding:0 12px;margin:0 0 10px"><span class="demo">demonstration</span> &nbsp;searches the 9 kept sample pages in your browser.</p>
+    <div class="ans" id="ans"></div>
+  </div>
+  <div class="col">
+    <div class="ph"><b>benchmark · v0</b><span class="sp">held-out pages</span></div>
+    <div class="bm">
+      <div><span style="text-align:left;color:var(--text)">nephila</span><i></i><span>not trained yet</span></div>
+    </div>
+    <p class="rule">Fill the masked crypto term, four choices. Questions come only from pages the training set never sees. Nothing is scored until a model exists, so there is no number here.</p>
+    <div class="rule" style="padding-bottom:6px">rule: sha256(url), first 8 hex digits, mod 4 == 0<code id="rule-n">sample set: 12 pages</code></div>
+    <div style="padding:0 12px 12px"><button class="btnp" id="hold-run" type="button">run the hold-out rule</button> <span style="color:var(--dim);margin-left:8px">runs in your browser</span></div>
+    <div class="hold" id="hold"></div>
+  </div>
+</section>
+
+<!-- ATLAS -->
+<section class="view" id="v-atlas" aria-label="atlas">
+  <div class="col">
+    <div class="ph"><b>the web she has read</b><span class="demo sp">demonstration</span></div>
+    <div class="gcv" id="atlas-wrap"><canvas id="atlas-cv" aria-label="graph of sample pages and links"></canvas><div class="tip" id="tip" hidden></div></div>
+  </div>
+  <div class="col">
+    <div class="ph"><b>vocabulary</b><span class="sp">crypto terms, occurrences in kept pages</span></div>
+    <div id="vocab"></div>
+  </div>
+  <div class="col">
+    <div class="ph"><b>sources by yield</b><span class="sp">share of each site that was new</span></div>
+    <div class="tbl"><table><thead><tr><th>site</th><th class="n">pages</th><th class="n">novel tok</th><th>new</th></tr></thead><tbody id="srcs"></tbody></table></div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section class="view" id="v-proof" aria-label="proof">
+  <div class="col">
+    <div class="ph"><b>open epoch</b><span class="sp">sample epoch 0001</span></div>
+    <p class="note pad" style="margin:0">Shares follow <b>novel tokens × relevance</b>, not page count. Re-reading known text earns nothing.</p>
+    <div class="tbl"><table><thead><tr><th>spider</th><th class="n">pages</th><th class="n">novel tok</th><th>share</th></tr></thead><tbody id="shares"></tbody></table></div>
+    <div class="ph" style="margin-top:12px;border-top:1px solid var(--line)"><b>sealed epochs</b></div>
+    <div class="ep" id="sealed"></div>
+  </div>
+  <div class="col">
+    <div class="ph"><b>find and verify a page</b><span class="sp">runs in your browser</span></div>
+    <div class="pick"><input class="f" id="pid" list="pids" value="p-0001" autocomplete="off" spellcheck="false" maxlength="8" aria-label="page id"><datalist id="pids"></datalist></div>
+    <div class="chips" id="pchips"></div>
+    <div id="psteps"></div>
+    <div class="final" id="pfinal"></div>
+    <div style="padding:0 12px 16px"><button class="btnl" id="tamper" type="button" aria-pressed="false">change one character of the text</button></div>
+  </div>
+</section>
+
+<!-- SPAWN -->
+<section class="view" id="v-spawn" aria-label="spawn">
+  <div class="col">
+    <div class="ph"><b>spawn a spider</b><span class="sp"><span class="demo">demonstration</span></span></div>
+    <p class="note pad">Name it and point it at a site. It reads that host only, obeys robots.txt and stops at the first bot check. Spawning is not open yet, so this builds the config and nothing else.</p>
+    <div class="spf"><input class="f" id="sname" value="ada" maxlength="16" autocomplete="off" spellcheck="false" aria-label="spider name"><input class="f" id="shost" value="docs.example.org" autocomplete="off" spellcheck="false" aria-label="host"></div>
+    <div class="spo"><canvas id="sigil" width="98" height="98" aria-label="spider sigil"></canvas><div style="min-width:0"><pre class="json" id="sjson"></pre><div class="cmdl"><code id="scmd"></code><button class="btnl" id="scopy" type="button">copy</button></div></div></div>
+    <p class="note pad">Spider compute is paid from creator fees. The split is posted at launch.</p>
+  </div>
+  <div class="col">
+    <div class="ph"><b>the nest</b><span class="sp">sample rows</span></div>
+    <div class="tbl"><table><thead><tr><th>spider</th><th>chapter</th><th>state</th><th class="n">pages</th><th class="n">novel tok</th><th class="n">rej</th></tr></thead><tbody id="nest2"></tbody></table></div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="view" id="v-roadmap" aria-label="roadmap">
+  <div class="road">
+    <p>What is built, and what comes after, in order. No dates: a phase is marked shipped only when it runs.</p>
+    <div class="rc">
+      <div class="rcard nx"><div class="tp"><span>01</span><b>NEXT</b></div><h3>the web</h3><ul><li>spiders online, real headless browsers, polite by construction</li><li>novelty gate: only what is new is kept</li><li>a receipt written for every kept page</li></ul></div>
+      <div class="rcard"><div class="tp"><span>02</span><b>THEN</b></div><h3>the anchor</h3><ul><li>a Solana program stores one merkle root per sealed epoch</li><li>public API: /v1/web, /v1/pages, /v1/proof</li><li>proofs checked against the on-chain root</li></ul></div>
+      <div class="rcard"><div class="tp"><span>03</span><b>THEN</b></div><h3>nephila</h3><ul><li>tokenizer trained on the crawl</li><li>first pretraining run, from random weights</li><li>weights public, dataset root inside the checkpoint</li></ul></div>
+      <div class="rcard"><div class="tp"><span>04</span><b>LATER</b></div><h3>the open nest</h3><ul><li>anyone can run a spider on their own machine</li><li>false receipts are rejected by the other spiders</li><li>a bigger nephila every time the dataset doubles</li></ul></div>
+    </div>
+    <div class="fund"><h2>what pays for it</h2><p>Spider compute is paid from creator fees. The split is posted at launch. Nothing on this page is running yet, and everything marked demonstration runs on 12 sample pages inside your browser.</p></div>
+  </div>
+</section>
+
+<!-- MANUAL -->
+<section class="view" id="v-man" aria-label="manual"><pre class="man" id="manual"></pre></section>
+</main>
+</div>
+<script src="config.js"></script><script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var C=window.ARACHNE_CFG||{};
+var CA=C.CA||'',BUY=C.BUY||(CA?'https://pump.fun/coin/'+CA:''),CHART=C.CHART||(CA?'https://gmgn.ai/sol/token/'+CA:''),XURL=C.X||'';
+var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function pad(n,l){return String(n).padStart(l||4,'0')}
+function sh(h){return h.slice(0,10)+'…'+h.slice(-6)}
+function fmt(n){return n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':String(n)}
+
+/* ---------- config wiring ---------- */
+function wire(sel,href){$$(sel).forEach(function(a){if(href){a.href=href;a.classList.remove('off');a.removeAttribute('aria-disabled')}else{a.removeAttribute('href');a.classList.add('off');a.setAttribute('aria-disabled','true')}})}
+wire('[data-buy]',BUY);wire('[data-chart]',CHART);wire('[data-x]',XURL);
+var caEl=$('#ca-text'),caBtn=$('#ca-copy');
+if(CA){caEl.textContent=CA;caEl.classList.remove('empty')}else caBtn.classList.add('off');
+function copyText(t,btn,label){
+  function done(){btn.textContent='copied';setTimeout(function(){btn.textContent=label},1400)}
+  function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,fb)}else fb();
+}
+caBtn.addEventListener('click',function(){if(CA)copyText(CA,caBtn,'copy')});
+
+/* ---------- sha256 (sync, pure js) ---------- */
+var PR=[];for(var n=2;PR.length<64;n++){var ok=true;for(var d=2;d*d<=n;d++){if(n%d===0){ok=false;break}}if(ok)PR.push(n)}
+function fr(x){return Math.floor((x-Math.floor(x))*4294967296)>>>0}
+var K=PR.map(function(p){return fr(Math.cbrt(p))}),H0=PR.slice(0,8).map(function(p){return fr(Math.sqrt(p))});
+function rr(x,k){return (x>>>k)|(x<<(32-k))}
+function sha(s){
+  var m=new TextEncoder().encode(s),l=m.length,n=((l+9+63)>>6)<<6,b=new Uint8Array(n);b.set(m);b[l]=128;
+  var dv=new DataView(b.buffer);dv.setUint32(n-8,Math.floor(l/536870912));dv.setUint32(n-4,(l<<3)>>>0);
+  var h=H0.slice(),w=new Uint32Array(64);
+  for(var o=0;o<n;o+=64){
+    for(var i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(i=16;i<64;i++){var a0=w[i-15],c0=w[i-2];w[i]=(w[i-16]+(rr(a0,7)^rr(a0,18)^(a0>>>3))+w[i-7]+(rr(c0,17)^rr(c0,19)^(c0>>>10)))>>>0}
+    var a=h[0],b2=h[1],c=h[2],d2=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
+    for(i=0;i<64;i++){
+      var t1=(hh+(rr(e,6)^rr(e,11)^rr(e,25))+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+      var t2=((rr(a,2)^rr(a,13)^rr(a,22))+((a&b2)^(a&c)^(b2&c)))>>>0;
+      hh=g;g=f;f=e;e=(d2+t1)>>>0;d2=c;c=b2;b2=a;a=(t1+t2)>>>0;
+    }
+    h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b2)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d2)>>>0;h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+hh)>>>0;
+  }
+  return h.map(function(x){return x.toString(16).padStart(8,'0')}).join('');
+}
+window.__sha=sha;
+
+/* ---------- sample pages ---------- */
+var SPN={ada:'argiope',brin:'saltic',cyr:'atrax',dax:'latro',eli:'wolfram'};
+var PAGES=[
+ {title:'Meridian rollup overview',url:'docs.meridian.example/rollup/overview',ch:'docs',sh:'ada',links:['docs.meridian.example/rollup/fraud-proofs','docs.meridian.example/rollup/sequencer','bridge.meridian.example/withdraw'],
+  text:'Meridian is an optimistic rollup that batches user transactions and posts compressed state roots to its base chain. Sequencers order transactions, provers challenge invalid state transitions during a seven day window, and withdrawals finalize once the challenge window closes without a dispute.'},
+ {title:'Tallow whitepaper',url:'tallow.example/whitepaper',ch:'whitepaper',sh:'dax',links:['tallow.example/risk','oracle.tallow.example/committee'],
+  text:'Tallow is a lending protocol where depositors supply stablecoins to a shared pool and borrowers post collateral at a fixed ratio. Interest rates adjust with utilization, liquidators repay unhealthy positions for a bonus, and an oracle committee signs price updates every block.'},
+ {title:'Proposal 14 · validator set',url:'gov.tallow.example/proposals/14',ch:'governance',sh:'brin',links:['gov.tallow.example/proposals/13','gov.tallow.example/proposals/15'],
+  text:'Proposal 14 raises the validator set from sixty to eighty and moves the unbonding period from twenty one days to fourteen. Token holders vote for five days, a quorum of four percent of staked supply is required, and the proposal executes automatically after a two day timelock.'},
+ {title:'ferrous/bridge-client',url:'github.example/ferrous/bridge-client',ch:'code',sh:'cyr',links:['github.example/ferrous/bridge-client/issues','docs.ferrous.example/relayer'],
+  text:'This repository contains the reference client for the Ferrous bridge. It watches deposit events on the source chain, waits for finality, builds a merkle proof of the deposit and submits it to the destination contract, which mints the wrapped asset to the recipient address.'},
+ {title:'Meridian rollup overview (v1)',url:'docs.meridian.example/rollup/overview-v1',ch:'docs',sh:'ada',links:['docs.meridian.example/rollup/overview'],
+  text:'Meridian is an optimistic rollup that batches user transactions and posts compressed state roots to its base chain. Sequencers order transactions, provers challenge invalid state transitions during a seven day window, and withdrawals finalize after the challenge window closes.'},
+ {title:'Sandwich attacks on constant product pools',url:'research.example/mev-constant-product',ch:'research',sh:'dax',links:['research.example/private-order-flow','research.example/builders'],
+  text:'We study maximal extractable value on constant product pools and show that sandwich attacks capture a median of nine basis points per swap. Private order flow reduces the extracted share, but routes concentrate volume with a handful of builders.'},
+ {title:'Sourdough for beginners',url:'kitchen.example/sourdough',ch:'stray',sh:'eli',links:['kitchen.example/starter'],
+  text:'Sourdough needs a warm kitchen, a strong starter and patience. Mix flour and water, rest for an hour, fold the dough every thirty minutes and bake in a hot covered pot until the crust turns deep brown.'},
+ {title:'post 8812',url:'social.example/post/8812',ch:'stray',sh:'eli',links:[],
+  text:'Gm. Wagmi. Stake now.'},
+ {title:'Session keys · Hexa wallet',url:'docs.hexa.example/wallet/session-keys',ch:'docs',sh:'ada',links:['docs.hexa.example/recovery','docs.hexa.example/paymaster'],
+  text:'Hexa wallet uses account abstraction so a single signature can batch several calls. Session keys let an app spend a limited allowance for a limited time, and a recovery module lets guardians rotate the owner key after a delay without ever holding funds.'},
+ {title:'Proposal 15 · grants committee',url:'gov.tallow.example/proposals/15',ch:'governance',sh:'brin',links:['gov.tallow.example/proposals/16','gov.tallow.example/treasury'],
+  text:'Proposal 15 creates a grants committee funded from three percent of annual emissions. Five members serve six month terms, every grant above fifty thousand tokens needs a public milestone plan, and unspent funds return to the treasury at the end of each term.'},
+ {title:'Shared sequencing',url:'research.example/shared-sequencing',ch:'research',sh:'dax',links:['research.example/inclusion-delay'],
+  text:'Rollup sequencers can be rotated through a shared sequencing layer, which gives users soft confirmation within a second while the base chain provides final settlement. We measure inclusion delay across forty thousand batches and report the tail latency of each design.'},
+ {title:'Data availability sampling',url:'docs.vellum-da.example/sampling',ch:'docs',sh:'ada',links:['docs.vellum-da.example/erasure-coding'],
+  text:'Data availability sampling lets light clients of a chain check that a block was published by downloading a few random chunks. If enough samples return, the chance that the block is withheld falls exponentially, and full nodes can reconstruct missing data from any half of the erasure coded shares.'}
+];
+var STEMS=['chain','token','validator','protocol','rollup','wallet','stak','bridge','merkle','oracle','stablecoin','liquidat','governance','proposal','contract','mint','block','transaction','signature','sequenc','withdraw','collateral','emission','treasury','pool','swap','mev','extractable','settlement','node','key'];
+var MINW=30,NOVMIN=0.35;
+var seen=Object.create(null),RES=[],RECEIPTS={},KEPT=[];
+function nrm(w){return w.toLowerCase().replace(/[^a-z0-9]/g,'')}
+PAGES.forEach(function(p,i){
+  p.words=p.text.split(/\s+/);
+  var norm=p.words.map(nrm);p.norm=norm;
+  var hits=[],counts={};
+  STEMS.forEach(function(s){var c=0;norm.forEach(function(w){if(w.indexOf(s)===0)c++});if(c){hits.push(s);counts[s]=c}});
+  var r={i:i,words:p.words.length,hits:hits.length,counts:counts,long:p.words.length>=MINW,crypto:hits.length>=3,ratio:null,kept:false,reason:'',mask:null,gate:false};
+  r.tokens=Math.round(p.words.length*1.3);
+  if(!r.long){r.reason='gate: too short';r.gate=true}
+  else if(!r.crypto){r.reason='gate: not about crypto';r.gate=true}
+  else{
+    var sing=[];for(var k=0;k+5<=norm.length;k++)sing.push(norm.slice(k,k+5).join(' '));
+    var mask=p.words.map(function(){return false}),nv=0;
+    sing.forEach(function(s,k){if(!seen[s]){nv++;for(var j=k;j<k+5;j++)mask[j]=true}});
+    r.ratio=nv/sing.length;r.mask=mask;
+    if(r.ratio<NOVMIN){r.reason='dedupe: '+Math.round(r.ratio*100)+'% new'}
+    else{r.kept=true;sing.forEach(function(s){seen[s]=1})}
+  }
+  r.novelTokens=r.kept?Math.round(r.ratio*r.tokens):0;
+  r.rel=Math.min(1,hits.length/6);
+  p.pid='p-'+pad(i+1);p.host=p.url.split('/')[0];p.spider=SPN[p.sh];
+  /* blocks = sentences */
+  var sents=p.text.split(/(?<=\.)\s+/),pos=0;p.blocks=[];
+  sents.forEach(function(s){var n=s.split(/\s+/).length;p.blocks.push({from:pos,to:pos+n});pos+=n});
+  p.blocks.forEach(function(b){var c=0;if(r.mask){for(var j=b.from;j<b.to;j++)if(r.mask[j])c++}b.frac=r.mask?c/(b.to-b.from):0});
+  if(r.kept){
+    var rec={id:p.pid,url:p.url,sha256:sha(p.text),tokens:r.tokens,novel:r.novelTokens,score:+r.ratio.toFixed(2),spider:p.spider,ts:1790000000+i*7};
+    RECEIPTS[p.pid]=rec;r.rec=rec;KEPT.push(p.pid);
+  }
+  RES.push(r);
+});
+var PIDX={};PAGES.forEach(function(p,i){PIDX[p.url]=i});
+
+/* merkle over kept receipts */
+function recJSON(r){return JSON.stringify({id:r.id,url:r.url,sha256:r.sha256,tokens:r.tokens,novel:r.novel,score:r.score,spider:r.spider,ts:r.ts})}
+var LEAVES=KEPT.map(function(id){return sha(recJSON(RECEIPTS[id]))});
+function levels(leaves){var L=[leaves.slice()];while(L[L.length-1].length>1){var c=L[L.length-1],nx=[];for(var i=0;i<c.length;i+=2){var l=c[i],r=i+1<c.length?c[i+1]:c[i];nx.push(sha(l+r))}L.push(nx)}return L}
+var LV=levels(LEAVES),ROOT=LV[LV.length-1][0];
+function pathFor(idx){var out=[];for(var lv=0;lv<LV.length-1;lv++){var row=LV[lv],sib=idx%2===0?idx+1:idx-1;if(sib>=row.length)sib=idx;out.push({side:idx%2===0?'R':'L',h:row[sib]});idx=idx>>1}return out}
+function fold(leaf,path){var h=leaf;path.forEach(function(s){h=s.side==='R'?sha(h+s.h):sha(s.h+h)});return h}
+
+/* per-spider tallies over the whole sample */
+var NEST=[
+ {n:'argiope',sh:'ada',ch:'docs'},{n:'saltic',sh:'brin',ch:'governance'},{n:'atrax',sh:'cyr',ch:'code'},
+ {n:'latro',sh:'dax',ch:'research'},{n:'wolfram',sh:'eli',ch:'stray'},{n:'bolas',sh:null,ch:'standards'},{n:'mygale',sh:null,ch:'wiki'}
+];
+NEST.forEach(function(s){s.ev=[];PAGES.forEach(function(p,i){if(p.sh===s.sh&&s.sh)s.ev.push(i)})});
+
+/* ---------- timeline ---------- */
+var T=4.6,WALK=1.1,SCAN=2.5,NEV=PAGES.length,HOLD=3,LOOP=NEV*T+HOLD;
+var clock=0,playing=true;
+function evOf(tt){return Math.min(NEV-1,Math.floor(tt/T))}
+function phaseOf(tt,i){return tt-i*T}
+function doneAt(i){return i*T+WALK+SCAN}   /* verdict time */
+
+/* ---------- views ---------- */
+var VIEWS=['web','spiders','model','atlas','proof','spawn','roadmap','man'],curView='web';
+function showView(v,silent){
+  if(VIEWS.indexOf(v)<0)v='web';curView=v;
+  VIEWS.forEach(function(k){var el=$('#v-'+k);el.classList.toggle('on',k===v)});
+  $$('nav.main a').forEach(function(a){a.classList.toggle('on',a.getAttribute('data-v')===v)});
+  if(!silent){try{history.replaceState(null,'','#'+v)}catch(e){}}
+  var sc=document.scrollingElement;if(sc&&window.innerWidth<=900)sc.scrollTop=0;
+  requestAnimationFrame(function(){window.dispatchEvent(new Event('resize'));drawAll()});
+}
+$$('a[data-v]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();showView(a.getAttribute('data-v'))})});
+$('#play').addEventListener('click',function(){playing=!playing;this.setAttribute('aria-pressed',playing);this.textContent='replay: '+(playing?'on':'off');$('#live-dot').classList.toggle('on',playing)});
+$('#live-dot').classList.add('on');
+
+/* ---------- spider sprite ---------- */
+function drawSpider(g,x,y,ang,t,s,moving,hot,tint){
+  g.save();g.translate(x,y);g.rotate(ang);
+  var col=tint||'#e9eef0';
+  g.strokeStyle=col;g.lineWidth=1.15*Math.max(.7,s*.8);g.lineCap='round';g.lineJoin='round';
+  var L=[9,11.5,12.5,10.5],A=[.5,1.0,1.65,2.45];
+  for(var side=-1;side<=1;side+=2){
+    for(var k=0;k<4;k++){
+      var sw=moving?Math.sin(t*11+k*1.7+(side>0?0:Math.PI))*.2:Math.sin(t*1.3+k+side)*.03;
+      var da=side*(A[k]+sw),len=L[k]*s;
+      var kx=Math.cos(da-side*.28)*len*.62,ky=Math.sin(da-side*.28)*len*.62;
+      var fx=Math.cos(da+side*.1)*len,fy=Math.sin(da+side*.1)*len;
+      g.beginPath();g.moveTo(Math.cos(da)*1.5*s,Math.sin(da)*1.5*s);g.lineTo(kx,ky);g.lineTo(fx,fy);g.stroke();
+    }
+  }
+  g.fillStyle=col;
+  g.beginPath();g.ellipse(-3.6*s,0,4.8*s,3.7*s,0,0,6.283);g.fill();
+  g.beginPath();g.arc(2.4*s,0,2.5*s,0,6.283);g.fill();
+  g.fillStyle='#ff7a2f';g.beginPath();g.arc(-3.6*s,0,1.5*s,0,6.283);g.fill();
+  if(hot){g.fillStyle='#ff7a2f';g.beginPath();g.arc(3.6*s,-.9*s,.7*s,0,6.283);g.arc(3.6*s,.9*s,.7*s,0,6.283);g.fill()}
+  g.restore();
+}
+
+/* ---------- web canvas ---------- */
+var WEB=(function(){
+  var cv=$('#web-cv'),g=cv.getContext('2d');
+  var W=0,H=0,dpr=1,cx=0,cy=0,R=0,S=14,RINGS=9;
+  /* node placement: page nodes on spoke/ring intersections, link nodes on the rim */
+  var SP_ORDER=[0,5,10,2,7,12,4,9,1,6,11,3],RING_ORDER=[6,3,8,5,7,4,8,6,3,7,5,8];
+  var linkList=[],linkIdx={};
+  PAGES.forEach(function(p){p.links.forEach(function(l){if(PIDX[l]===undefined&&linkIdx[l]===undefined){linkIdx[l]=linkList.length;linkList.push(l)}})});
+  var homeAng=[0,1,2,3,4].map(function(k){return -Math.PI/2+k*(6.283/5)+.3});
+  function spokeAng(s,t){return -Math.PI/2+s*(6.283/S)}
+  function ringR(k){return R*Math.pow(k/RINGS,1.0)}
+  function pagePos(i){var a=spokeAng(SP_ORDER[i]),r=ringR(RING_ORDER[i]);return {x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,a:a}}
+  function linkPos(j){var s=(j*5+2)%S,a=spokeAng(s)+.12;return {x:cx+Math.cos(a)*R*1.0,y:cy+Math.sin(a)*R*1.0,a:a}}
+  function homePos(k){var a=homeAng[k];return {x:cx+Math.cos(a)*R*1.06,y:cy+Math.sin(a)*R*1.06,a:a+Math.PI}}
+  function fit(){
+    var r=cv.getBoundingClientRect();if(!r.width)return;
+    dpr=Math.min(window.devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+    cx=W/2;cy=(W<520?H/2:H/2+30);R=Math.max(60,Math.min(W/2-(W<520?22:74),(H-(W<520?0:64))/2-14));
+  }
+  function webLines(t){
+    g.lineCap='round';
+    /* spokes */
+    g.strokeStyle='rgba(201,211,216,.2)';g.lineWidth=1;g.beginPath();
+    for(var s=0;s<S;s++){var a=spokeAng(s);g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R)}g.stroke();
+    /* capture rings with sag */
+    for(var k=1;k<=RINGS;k++){
+      var r=ringR(k);g.strokeStyle='rgba(201,211,216,'+(k===RINGS?.26:.15)+')';g.beginPath();
+      for(var s2=0;s2<S;s2++){
+        var a0=spokeAng(s2),a1=spokeAng(s2+1),am=(a0+a1)/2,sag=r*(.935+Math.sin(t*.6+s2*.9+k*.3)*.006);
+        var x0=cx+Math.cos(a0)*r,y0=cy+Math.sin(a0)*r,x1=cx+Math.cos(a1)*r,y1=cy+Math.sin(a1)*r;
+        g.moveTo(x0,y0);g.quadraticCurveTo(cx+Math.cos(am)*sag*1.0,cy+Math.sin(am)*sag*1.0,x1,y1);
+      }
+      g.stroke();
+    }
+    /* dew */
+    g.fillStyle='rgba(233,238,240,.32)';
+    for(var s3=0;s3<S;s3++){for(var k2=1;k2<=RINGS;k2+=1){var a2=spokeAng(s3),r2=ringR(k2);g.beginPath();g.arc(cx+Math.cos(a2)*r2,cy+Math.sin(a2)*r2,.9,0,6.283);g.fill()}}
+  }
+  /* state of a spider at time tt: {x,y,ang,moving,fromI,toI,scanning,ev} */
+  function spiderState(k,tt){
+    var s=NEST[k];if(!s.ev.length)return null;
+    var prevNode=homePos(k),prevEnd=0,res={x:prevNode.x,y:prevNode.y,ang:prevNode.a,moving:false,scanning:false,ev:-1};
+    for(var q=0;q<s.ev.length;q++){
+      var i=s.ev[q],arr=i*T+WALK,dep=Math.max(prevEnd,arr-6),to=pagePos(i);
+      if(tt<dep)break;
+      if(tt<arr){var u=(tt-dep)/(arr-dep);u=u*u*(3-2*u);
+        var x=prevNode.x+(to.x-prevNode.x)*u,y=prevNode.y+(to.y-prevNode.y)*u+Math.sin(u*Math.PI)*6;
+        res={x:x,y:y,ang:Math.atan2(to.y-prevNode.y,to.x-prevNode.x),moving:true,scanning:false,ev:i,from:prevNode,to:to,u:u};return res}
+      res={x:to.x,y:to.y,ang:Math.atan2(to.y-prevNode.y,to.x-prevNode.x),moving:false,scanning:tt<arr+SCAN,ev:i,arrived:true};
+      prevNode=to;prevEnd=arr+SCAN;
+    }
+    return res;
+  }
+  function draw(tt,wall){
+    if(!W)fit();if(!W)return;
+    g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+    var t=performance.now()/1000,fade=1;
+    if(tt>LOOP-.6)fade=Math.max(0,(LOOP-tt)/.6);else if(tt<.6)fade=tt/.6;
+    /* glow */
+    var gr=g.createRadialGradient(cx,cy,0,cx,cy,R*1.05);gr.addColorStop(0,'rgba(255,122,47,.07)');gr.addColorStop(1,'rgba(255,122,47,0)');
+    g.fillStyle=gr;g.fillRect(0,0,W,H);
+    webLines(t);
+    g.globalAlpha=fade;
+    var lab=W>=520;
+    /* silk laid by each spider (completed reads) + link threads */
+    var k,q,i;
+    NEST.forEach(function(s,k2){
+      var prev=homePos(k2);
+      s.ev.forEach(function(i2){
+        var to=pagePos(i2),r=RES[i2],arr=i2*T+WALK;
+        if(tt>=doneAt(i2)){
+          g.strokeStyle=r.kept?'rgba(110,231,168,.4)':'rgba(120,132,142,.3)';g.lineWidth=1.2;g.beginPath();g.moveTo(prev.x,prev.y);g.lineTo(to.x,to.y);g.stroke();
+        }
+        prev=to;
+      });
+    });
+    g.setLineDash([3,4]);g.lineWidth=1;
+    for(i=0;i<NEV;i++){
+      if(!RES[i].kept||tt<doneAt(i))continue;
+      var a=pagePos(i),al=Math.min(1,(tt-doneAt(i))/.8);
+      PAGES[i].links.forEach(function(l){
+        var b=PIDX[l]!==undefined?pagePos(PIDX[l]):linkPos(linkIdx[l]);
+        g.strokeStyle='rgba(255,122,47,'+(.5*al)+')';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();
+      });
+    }
+    g.setLineDash([]);
+    /* link nodes */
+    linkList.forEach(function(l,j){
+      var P=linkPos(j),lit=false;
+      for(var e=0;e<NEV;e++){if(RES[e].kept&&tt>=doneAt(e)&&PAGES[e].links.indexOf(l)>=0){lit=true;break}}
+      g.strokeStyle=lit?'#ff7a2f':'rgba(255,122,47,.28)';g.lineWidth=lit?1.6:1;g.beginPath();g.arc(P.x,P.y,lit?3.6:2.6,0,6.283);g.stroke();
+    });
+    /* page nodes */
+    for(i=0;i<NEV;i++){
+      var P=pagePos(i),done=tt>=doneAt(i),r=RES[i],scanning=tt>=i*T+WALK&&tt<doneAt(i);
+      if(done){g.fillStyle=r.kept?'#6ee7a8':'#5f6b75';g.beginPath();g.arc(P.x,P.y,r.kept?5:3.6,0,6.283);g.fill()}
+      else{g.strokeStyle=scanning?'#ff7a2f':'rgba(154,166,175,.5)';g.lineWidth=1.2;g.beginPath();g.arc(P.x,P.y,3.4,0,6.283);g.stroke()}
+      if(scanning){
+        var u=(tt-(i*T+WALK))/SCAN;
+        for(var w=0;w<3;w++){var ph=(u*3+w/3)%1;g.strokeStyle='rgba(255,122,47,'+(.7*(1-ph))+')';g.lineWidth=1.3;g.beginPath();g.arc(P.x,P.y,5+ph*30,0,6.283);g.stroke()}
+      }
+      if(lab){
+        var show=done||scanning||tt>i*T-4;
+        g.font='10px "JetBrains Mono",monospace';g.fillStyle=done?(r.kept?'rgba(233,238,240,.82)':'rgba(154,166,175,.6)'):'rgba(154,166,175,.38)';
+        var right=Math.cos(P.a)>=0;g.textAlign=right?'left':'right';
+        var off=right?9:-9;g.fillText(P.a===undefined?'':PAGES[i].host,P.x+off,P.y+3.5);
+      }
+    }
+    /* spiders */
+    for(k=0;k<5;k++){
+      var st=spiderState(k,tt);if(!st)continue;
+      if(st.moving){
+        g.strokeStyle='rgba(255,122,47,.85)';g.lineWidth=1.3;g.beginPath();g.moveTo(st.from.x,st.from.y);g.lineTo(st.x,st.y);g.stroke();
+      }
+      drawSpider(g,st.x,st.y,st.ang,t,W<520?.95:1.25,st.moving,st.scanning||st.moving);
+      if(st.moving||st.scanning){
+        g.font='10px "JetBrains Mono",monospace';g.fillStyle='#ff7a2f';g.textAlign='center';g.fillText(NEST[k].n,st.x,st.y-13);
+      }
+    }
+    g.globalAlpha=1;
+  }
+  return {fit:fit,draw:draw,pagePos:pagePos};
+})();
+
+/* ---------- wireframe thumbnails ---------- */
+function wire2(g,w,h,pi,q,idleMode){
+  g.setTransform(1,0,0,1,0,0);g.fillStyle='#05070a';g.fillRect(0,0,w,h);
+  if(pi<0){g.fillStyle='#161d23';g.fillRect(w*.1,h*.5,w*.8,2);return}
+  var p=PAGES[pi],r=RES[pi],s=h/160,y=10*s+4,rowH=Math.max(2,3.4*s),gap=Math.max(2,3*s);
+  g.fillStyle='#10161b';g.fillRect(0,0,w,9*s+2);g.fillStyle='#202a31';g.fillRect(w*.05,3*s,w*.4,3*s);
+  var ry=Math.max(3,5*s);g.fillStyle=q>=0?'#e9eef0':'#2a343d';
+  var rows=[];rows.push({y:y,h:ry*1.4,w:.5,fr:r.mask?Math.max(.3,r.ratio):0,t:1});y+=ry*1.4+gap*1.6;
+  p.blocks.forEach(function(b,bi){
+    var n=Math.max(1,Math.ceil((b.to-b.from)/8));
+    for(var l=0;l<n;l++){var wd=l===n-1?.35+((pi*7+bi*3)%5)/10:.9;rows.push({y:y,h:rowH,w:wd,fr:b.frac,t:0});y+=rowH+gap}
+    y+=gap*1.4;
+  });
+  var total=y;
+  rows.forEach(function(rw){
+    var read=q<0?false:(rw.y/total<=q||q>=1);
+    var col=!read?'#1b242b':(r.kept?(rw.fr>=.5?'#6ee7a8':'#3a464f'):'#3a464f');
+    if(rw.t&&read)col='#e9eef0';
+    g.fillStyle=col;g.fillRect(w*.07,rw.y,(w*.86)*rw.w,rw.h);
+  });
+  if(q>0&&q<1){var ly=Math.min(h-1,total*q);g.fillStyle='#ff7a2f';g.fillRect(0,ly,w,1);g.fillStyle='rgba(255,122,47,.12)';g.fillRect(0,ly-8*s,w,8*s)}
+}
+
+/* ---------- scanner (web view, right) ---------- */
+var SC={i:-1,rdn:-1,blocks:[],tops:[],fOn:-1,logN:-1,verdict:false};
+var inner=$('#pageinner'),sline=$('#sline'),idle=$('#idle'),pagewrap=$('#pagewrap');
+function buildPage(i){
+  var p=PAGES[i],r=RES[i],h='';
+  var tf=r.mask?r.ratio:0;
+  h+='<div class="blk h"><span class="lb">H1</span><span class="w">'+esc(p.title)+'</span></div>';
+  p.blocks.forEach(function(b,bi){
+    var words=[];for(var j=b.from;j<b.to;j++){
+      var cls=r.mask?(r.mask[j]?'nw':'sn'):'pl',key=false;
+      for(var s=0;s<STEMS.length;s++){if(p.norm[j].indexOf(STEMS[s])===0){key=true;break}}
+      words.push('<span class="w '+cls+(key?' k':'')+'">'+esc(p.words[j])+'</span>');
+    }
+    var lab=r.gate?'P · SKIPPED':(b.frac>=.5?'P · '+Math.round(b.frac*100)+'% NEW':'P · KNOWN');
+    h+='<div class="blk p'+(b.frac>=.5?' nwt':'')+'" data-nw="'+(b.frac>=.5?1:0)+'"><span class="lb">'+lab+'</span>'+words.join(' ')+'</div>';
+  });
+  h+='<div class="lnks">'+(p.links.length?p.links.map(function(l){var kn=PIDX[l]!==undefined;return '<span class="lk'+(kn?' kn':'')+'">→ '+esc(l)+'</span>'}).join(''):'<span style="color:var(--dim)">no links found</span>')+'</div>';
+  inner.innerHTML=h;
+  SC.blocks=$$('#pageinner .blk');SC.lk=$('#pageinner .lnks');
+  SC.i=i;SC.rdn=-1;SC.fOn=-1;SC.verdict=false;
+  var tops=[];SC.blocks.forEach(function(b){tops.push(b.offsetTop)});tops.push(SC.lk.offsetTop);SC.tops=tops;SC.total=SC.lk.offsetTop+SC.lk.offsetHeight;
+  /* side panel static fields */
+  var nov=r.mask?Math.round(r.ratio*100):0,nl=p.links.length,known=p.links.filter(function(l){return PIDX[l]!==undefined&&PIDX[l]<i&&RES[PIDX[l]].kept}).length;
+  $('#f-url').textContent=p.host;$('#f-title').textContent=p.title;
+  $('#f-doc').textContent='en · '+r.words+' words · ~'+r.tokens+' tok';
+  $('#f-str').textContent='h 1 · p '+p.blocks.length+' · li 0 · code 0 · table 0';
+  $('#f-nov').textContent=r.mask?nov+'%':'skipped at gate';$('#f-novb').style.width=nov+'%';
+  $('#f-rel').textContent=r.rel.toFixed(2)+' · '+r.hits+' crypto terms';$('#f-relb').style.width=Math.round(r.rel*100)+'%';
+  var kt=Object.keys(r.counts).sort(function(a,b){return r.counts[b]-r.counts[a]}).slice(0,6);
+  $('#f-kt').innerHTML=kt.length?kt.map(function(k){return '<span>'+esc(k)+' <em>×'+r.counts[k]+'</em></span>'}).join(''):'<span style="color:var(--dim);border-color:transparent">none found</span>';
+  $('#f-lk').textContent=nl+' found · '+known+' known · '+(nl-known)+' in the frontier';
+  $('#f-sha').textContent=sh(sha(p.text));
+  $('#f-ver').innerHTML='';
+  $('#s-sp').textContent=p.spider;$('#s-url').textContent=p.url;
+  $('#s-meta').textContent=p.blocks.length+1+' blocks · '+nl+' links';
+  var th=$('#thumb');
+  SC.thumb=th.getContext('2d');
+}
+function updateScan(tt){
+  var i=evOf(tt),ph=phaseOf(tt,i),p=PAGES[i],r=RES[i];
+  if(tt>=NEV*T){i=NEV-1;ph=T+1;p=PAGES[i];r=RES[i]}
+  var cap=$('#cap');
+  if(ph<WALK){
+    if(SC.i!==i){inner.innerHTML='';SC.i=-2;$('#s-sp').textContent=p.spider;$('#s-url').textContent=p.url;$('#s-meta').textContent='opening…';
+      $$('.sf').forEach(function(f){f.classList.remove('on')});SC.fOn=-1;$('#f-ver').innerHTML=''}
+    idle.hidden=false;idle.textContent=p.spider+' is on its way to '+p.host;sline.hidden=true;
+    cap.className='cap';cap.textContent='● '+p.spider+' is walking to '+p.url;
+    if(SC.thumb)wire2(SC.thumb,264,156,-1,-1);
+    return;
+  }
+  if(SC.i!==i)buildPage(i);
+  idle.hidden=true;
+  var q=Math.max(0,Math.min(1,(ph-WALK)/SCAN));
+  var y=q*(SC.total+10);
+  sline.hidden=q>=1;sline.style.top=(y+20)+'px';$('#sl-t').textContent='y '+pad(Math.round(y),4)+' / '+pad(SC.total,4);
+  /* block reveal */
+  var rd=0;for(var b=0;b<SC.tops.length;b++){if(y>=SC.tops[b])rd=b+1}
+  if(rd!==SC.rdn){SC.rdn=rd;SC.blocks.forEach(function(bl,k){bl.classList.toggle('rd',k<rd);bl.classList.toggle('nw',k<rd&&bl.getAttribute('data-nw')==='1'&&!RES[i].gate)});SC.lk.classList.toggle('rd',rd>SC.blocks.length)}
+  var fo=Math.min(8,Math.floor(q*9));
+  if(q>=1)fo=8;
+  if(fo!==SC.fOn){SC.fOn=fo;$$('.sf').forEach(function(f){f.classList.toggle('on',+f.getAttribute('data-f')<=fo)})}
+  var done=ph>=WALK+SCAN;
+  if(done&&!SC.verdict){SC.verdict=true;
+    if(r.kept)$('#f-ver').innerHTML='<span style="color:var(--ok)">KEPT '+p.pid+' · +'+r.novelTokens+' novel tok</span><br><button class="btnl" style="margin-top:6px;min-height:28px;padding:0 8px" data-id="'+p.pid+'" type="button">verify the proof →</button>';
+    else $('#f-ver').innerHTML='<span style="color:var(--ember)">DROPPED · '+esc(r.reason)+'</span>';
+  }
+  if(done){cap.className='cap '+(r.kept?'k':'d');cap.textContent=r.kept?'✓ kept '+p.title+' · '+r.tokens+' tok, '+r.novelTokens+' novel · '+p.links.length+' links to follow · verify '+p.pid:'✗ dropped '+p.title+' · '+r.reason}
+  else{cap.className='cap';cap.textContent='● '+p.spider+' reading '+p.url+' · green: new to the dataset · grey: already read'}
+  if(SC.thumb)wire2(SC.thumb,264,156,i,done?1:q);
+}
+$('#f-ver').addEventListener('click',function(e){var b=e.target.closest('button[data-id]');if(b)openProof(b.getAttribute('data-id'))});
+
+/* ---------- log + nest table (re-render on change) ---------- */
+function renderLog(tt){
+  var n=0;for(var i=0;i<NEV;i++)if(tt>=doneAt(i))n=i+1;
+  if(n===SC.logN)return;SC.logN=n;
+  var lines=[];
+  for(var j=n-1;j>=0;j--){var p=PAGES[j],r=RES[j];
+    if(r.kept)lines.push('<button class="ln k" type="button" data-id="'+p.pid+'"><span class="a">'+p.spider+'</span><span class="t">#'+p.pid.slice(2)+' '+esc(p.title)+'</span><span class="r">+'+r.novelTokens+'</span></button>');
+    else lines.push('<div class="ln d"><span class="a">'+p.spider+'</span><span class="t">'+esc(p.url)+'</span><span class="r">'+esc(r.reason.replace('gate: too short','thin').replace('gate: not about crypto','off-topic').replace('dedupe: ','near-dup '))+'</span></div>')}
+  $('#log').innerHTML=lines.join('')||'<div class="emp">no pages yet. the first spider is on its way.</div>';
+  var cur=Math.min(NEV-1,evOf(clock));
+  $('#ep-m').style.width=Math.round(n/NEV*100)+'%';$('#ep-t').textContent=n+'/'+NEV;
+  renderNest(cur);
+}
+$('#log').addEventListener('click',function(e){var b=e.target.closest('button.ln');if(b)openProof(b.getAttribute('data-id'))});
+function renderNest(){
+  var tt=clock,per={};
+  for(var i=0;i<NEV;i++){if(tt<doneAt(i))continue;var p=PAGES[i],r=RES[i],s=per[p.sh]||(per[p.sh]={pages:0,novel:0,rej:0,url:'',ch:p.ch,i:i});s.pages++;s.novel+=r.novelTokens;if(!r.kept)s.rej++;s.url=p.url;s.ch=p.ch;s.i=i}
+  var cur=evOf(Math.min(tt,NEV*T-.01)),active=PAGES[cur].sh;
+  $('#tbody').innerHTML=NEST.map(function(n,ix){var s=per[n.sh];var act=n.sh&&n.sh===active&&tt<NEV*T;
+    if(!s)return '<tr><td>'+(4101+ix)+'</td><td>'+n.n+'</td><td><i class="s'+(act?' rd':'')+'"></i></td><td style="color:var(--dim)">'+n.ch+'</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="u">'+(n.sh?'on its way':'asleep')+'</td></tr>';
+    return '<tr'+(act?' class="cur"':'')+'><td>'+(4101+ix)+'</td><td>'+n.n+'</td><td><i class="s'+(act?' rd':'')+'"></i></td><td>'+esc(s.ch)+'</td><td class="n">'+s.pages+'</td><td class="n">'+s.novel+'</td><td class="n">'+s.rej+'</td><td class="u">'+esc(s.url)+'</td></tr>'}).join('');
+}
+
+/* ---------- spiders wall ---------- */
+(function(){
+  var wall=$('#wall'),html='';
+  NEST.forEach(function(n,k){html+='<div class="scr"><canvas data-k="'+k+'" aria-label="'+n.n+' screen"></canvas><div class="cp"><b>'+n.n+'</b><i data-st="'+k+'">asleep</i><span data-u="'+k+'"></span></div></div>'});
+  wall.innerHTML=html;
+})();
+var WALLCV=$$('#wall canvas').map(function(c){return {c:c,g:c.getContext('2d'),w:0,h:0}});
+function drawWall(tt){
+  WALLCV.forEach(function(o,k){
+    var r=o.c.getBoundingClientRect();if(!r.width)return;
+    var dpr=Math.min(window.devicePixelRatio||1,2),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);
+    if(o.w!==w||o.h!==h){o.c.width=w;o.c.height=h;o.w=w;o.h=h}
+    var s=NEST[k],pi=-1,q=-1,st='asleep',url='';
+    if(s.ev.length){
+      for(var q2=0;q2<s.ev.length;q2++){var i=s.ev[q2];if(tt>=i*T+WALK-.001){pi=i}}
+      var nextI=-1;for(var q3=0;q3<s.ev.length;q3++){if(tt<s.ev[q3]*T+WALK){nextI=s.ev[q3];break}}
+      if(pi>=0){var ph=tt-(pi*T+WALK);q=ph>=SCAN?1:ph/SCAN;st=(ph<SCAN||nextI>=0)?'crawling':'done';url=PAGES[pi].url;if(ph>=SCAN&&nextI<0)st='done'}
+      else{st='crawling';url='on its way'}
+      if(pi>=0&&q>=1&&nextI>=0&&nextI-pi>0)q=1;
+    }
+    wire2(o.g,w,h,pi,q);
+    var e=$('[data-st="'+k+'"]'),u=$('[data-u="'+k+'"]');
+    if(e.textContent!==st){e.textContent=st;e.className=st==='crawling'?'':'z'}
+    if(u.textContent!==url)u.textContent=url;
+  });
+}
+
+/* ---------- nephila view ---------- */
+(function(){
+  var STG=[['crawl','0 pages from 0 hosts'],['dedupe','no tokens counted'],['tokenizer','BPE, crawl only · not trained'],['seal','no open root yet'],['export','npm run export → train.bin, val.bin'],['pretrain','needs a GPU · not run'],['release','no weights yet']];
+  $('#stg').innerHTML=STG.map(function(s){return '<li><span>·</span><b>'+s[0]+'</b><span>'+s[1]+'</span></li>'}).join('');
+  var CH=['whitepapers','docs','governance','code','research','security'];
+  $('#chs').innerHTML=CH.map(function(c){return '<div><span style="text-align:left;color:var(--text)">'+c+'</span><i></i><span>0 pages · 0 queued</span></div>'}).join('');
+  var STOP='the a an of to and or is are was how does do what why who in on for with it its that this by as at from be can'.split(' ');
+  function ask(q){
+    var ws=q.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(function(w){return w&&STOP.indexOf(w)<0});
+    var out=[];
+    KEPT.forEach(function(id){var p=PAGES[+id.slice(2)-1];
+      p.blocks.forEach(function(b){var sc=0;for(var j=b.from;j<b.to;j++){ws.forEach(function(w){if(w.length>2&&p.norm[j].indexOf(w.slice(0,Math.max(4,w.length-2)))===0)sc++})}
+        if(sc)out.push({sc:sc,p:p,b:b})})});
+    out.sort(function(a,b){return b.sc-a.sc});
+    var top=out.slice(0,3);
+    $('#ans').innerHTML=top.length?top.map(function(o){return '<blockquote>'+esc(o.p.words.slice(o.b.from,o.b.to).join(' '))+'<small>'+esc(o.p.url)+' · <button type="button" data-id="'+o.p.pid+'">verify '+o.p.pid+'</button></small></blockquote>'}).join(''):'<p class="note">No kept page says anything about that. She has only read 9 sample pages.</p>';
+  }
+  $('#askf').addEventListener('submit',function(e){e.preventDefault();ask($('#askq').value)});
+  $('#ans').addEventListener('click',function(e){var b=e.target.closest('button[data-id]');if(b)openProof(b.getAttribute('data-id'))});
+  $('#hold-run').addEventListener('click',function(){
+    var rows=PAGES.map(function(p){var h=sha(p.url).slice(0,8),v=parseInt(h,16),ho=v%4===0;return '<div class="r '+(ho?'y':'')+'"><span>'+p.pid+'</span><span>'+h+'</span><span>'+v+' mod 4 = '+(v%4)+'</span><span>'+(ho?'held out':'train')+'</span></div>'});
+    var held=PAGES.filter(function(p){return parseInt(sha(p.url).slice(0,8),16)%4===0}).length;
+    $('#hold').innerHTML='<div style="color:var(--text);padding-bottom:6px">'+held+' of '+PAGES.length+' sample pages are held out of training</div>'+rows.join('');
+  });
+})();
+
+/* ---------- atlas ---------- */
+var ATLAS=(function(){
+  var cv=$('#atlas-cv'),g=cv.getContext('2d'),tip=$('#tip');
+  var nodes=[],idx={},edges=[];
+  PAGES.forEach(function(p,i){idx[p.url]=nodes.length;nodes.push({url:p.url,type:RES[i].kept?'kept':'seen',i:i,x:0,y:0})});
+  PAGES.forEach(function(p,i){p.links.forEach(function(l){if(idx[l]===undefined){idx[l]=nodes.length;nodes.push({url:l,type:'link',x:0,y:0})}edges.push([i,idx[l]])})});
+  var s=7;function rnd(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+  nodes.forEach(function(n){var a=rnd()*6.283,r=Math.sqrt(rnd());n.x=Math.cos(a)*r;n.y=Math.sin(a)*r;n.vx=0;n.vy=0});
+  for(var it=0;it<420;it++){
+    var cool=1-it/420;
+    for(var a=0;a<nodes.length;a++){for(var b=a+1;b<nodes.length;b++){var A=nodes[a],B=nodes[b],dx=A.x-B.x,dy=A.y-B.y,d2=dx*dx+dy*dy+.002,f=.012/d2,d=Math.sqrt(d2);dx/=d;dy/=d;A.vx+=dx*f;A.vy+=dy*f;B.vx-=dx*f;B.vy-=dy*f}}
+    edges.forEach(function(e){var A=nodes[e[0]],B=nodes[e[1]],dx=B.x-A.x,dy=B.y-A.y,d=Math.sqrt(dx*dx+dy*dy)+.001,f=(d-.22)*.05;dx/=d;dy/=d;A.vx+=dx*f;A.vy+=dy*f;B.vx-=dx*f;B.vy-=dy*f});
+    nodes.forEach(function(n){n.vx-=n.x*.012;n.vy-=n.y*.012;n.x+=n.vx*cool*2;n.y+=n.vy*cool*2;n.vx*=.6;n.vy*=.6});
+  }
+  var W=0,H=0,dpr=1,hover=null,pos=[];
+  function fit(){
+    var r=cv.getBoundingClientRect();if(!r.width)return;
+    dpr=Math.min(window.devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);g.setTransform(dpr,0,0,dpr,0,0);
+    var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;nodes.forEach(function(n){x0=Math.min(x0,n.x);x1=Math.max(x1,n.x);y0=Math.min(y0,n.y);y1=Math.max(y1,n.y)});
+    var padx=W<420?24:48,pady=36,scx=(W-padx*2)/(x1-x0||1),scy=(H-pady*2)/(y1-y0||1);
+    pos=nodes.map(function(n){return {x:padx+(n.x-x0)*scx,y:pady+(n.y-y0)*scy}});
+    draw();
+  }
+  function draw(){
+    if(!W)return;g.clearRect(0,0,W,H);g.lineWidth=1;
+    edges.forEach(function(e){var A=pos[e[0]],B=pos[e[1]],hot=hover!==null&&(hover===e[0]||hover===e[1]);g.strokeStyle=hot?'rgba(255,122,47,.8)':'rgba(154,166,175,.25)';g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.stroke()});
+    nodes.forEach(function(n,i){var P=pos[i],hot=hover===i;
+      if(n.type==='link'){g.strokeStyle='#ff7a2f';g.lineWidth=1.6;g.beginPath();g.arc(P.x,P.y,hot?6:4,0,6.283);g.stroke()}
+      else{g.fillStyle=n.type==='kept'?'#6ee7a8':'#5f6b75';g.beginPath();g.arc(P.x,P.y,hot?8:6,0,6.283);g.fill();
+        g.fillStyle='rgba(233,238,240,'+(hot?1:.55)+')';g.font='10.5px "JetBrains Mono",monospace';g.textAlign='center';g.fillText(PAGES[n.i].pid,P.x,P.y-12)}
+    });
+  }
+  function pick(ev){var r=cv.getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top,best=null,bd=18;pos.forEach(function(P,i){var d=Math.hypot(P.x-x,P.y-y);if(d<bd){bd=d;best=i}});return {i:best,x:x,y:y}}
+  function show(h){
+    if(h.i!==hover){hover=h.i;draw()}
+    if(hover===null){tip.hidden=true;return}
+    var n=nodes[hover],lab=n.type==='kept'?'kept · click to open proof':n.type==='seen'?'read, dropped ('+RES[n.i].reason+')':'link, not read yet';
+    tip.innerHTML=esc(n.url)+'<small>'+lab+'</small>';tip.hidden=false;
+    tip.style.left=Math.min(Math.max(h.x+14,8),W-tip.offsetWidth-8)+'px';tip.style.top=Math.min(Math.max(h.y+14,8),H-tip.offsetHeight-8)+'px';
+  }
+  cv.addEventListener('pointermove',function(e){show(pick(e))});
+  cv.addEventListener('pointerleave',function(){show({i:null})});
+  cv.addEventListener('click',function(e){var h=pick(e);show(h);if(h.i!==null&&nodes[h.i].type==='kept')openProof(PAGES[nodes[h.i].i].pid)});
+  /* vocab + sources */
+  var voc={};KEPT.forEach(function(id){var p=PAGES[+id.slice(2)-1];STEMS.forEach(function(st){var c=0;p.norm.forEach(function(w){if(w.indexOf(st)===0)c++});if(c)voc[st]=(voc[st]||0)+c})});
+  var vk=Object.keys(voc).sort(function(a,b){return voc[b]-voc[a]||(a<b?-1:1)}).slice(0,16),mx=voc[vk[0]]||1;
+  $('#vocab').innerHTML=vk.map(function(k){return '<div class="vb"><span>'+k+'</span><i><s style="width:'+Math.round(voc[k]/mx*100)+'%"></s></i><span>'+voc[k]+'</span></div>'}).join('');
+  var hs={};PAGES.forEach(function(p,i){var h=hs[p.host]||(hs[p.host]={pages:0,novel:0,tok:0});if(RES[i].kept){h.pages++;h.novel+=RES[i].novelTokens;h.tok+=RES[i].tokens}});
+  var hk=Object.keys(hs).sort(function(a,b){return hs[b].novel-hs[a].novel||(a<b?-1:1)});
+  $('#srcs').innerHTML=hk.map(function(k){var h=hs[k],pc=h.tok?Math.round(h.novel/h.tok*100):0;return '<tr><td>'+esc(k)+'</td><td class="n">'+h.pages+'</td><td class="n">'+h.novel+'</td><td><span class="yb"><i style="width:'+pc+'%"></i></span>'+(h.tok?pc+'%':'–')+'</td></tr>'}).join('');
+  window.addEventListener('resize',fit);
+  return {fit:fit};
+})();
+
+/* ---------- proof ---------- */
+var pidEl=$('#pid'),tampered=false,curPid='p-0001';
+$('#pids').innerHTML=KEPT.map(function(id){return '<option value="'+id+'">'}).join('');
+$('#pchips').innerHTML=PAGES.map(function(p,i){return '<button class="btnl" type="button" data-id="'+p.pid+'" style="'+(RES[i].kept?'':'color:var(--dim)')+'">'+p.pid+'</button>'}).join('');
+(function(){
+  var per={},tot=0;
+  KEPT.forEach(function(id){var p=PAGES[+id.slice(2)-1],r=RES[+id.slice(2)-1],s=per[p.spider]||(per[p.spider]={pages:0,novel:0,w:0});s.pages++;s.novel+=r.novelTokens;s.w+=r.novelTokens*r.rel;tot+=r.novelTokens*r.rel});
+  var ks=Object.keys(per).sort(function(a,b){return per[b].w-per[a].w});
+  $('#shares').innerHTML=ks.map(function(k){var s=per[k],pc=tot?s.w/tot*100:0;return '<tr><td>'+k+'</td><td class="n">'+s.pages+'</td><td class="n">'+s.novel+'</td><td><span class="bar3" style="width:'+Math.max(3,Math.round(pc*1.3))+'px"></span>'+pc.toFixed(1)+'%</td></tr>'}).join('');
+  $('#sealed').innerHTML='epoch 0001 · sample · '+KEPT.length+' pages · '+KEPT.reduce(function(a,id){return a+RES[+id.slice(2)-1].novelTokens},0)+' novel tok <button class="btnl" id="audit" type="button">audit</button><br>root <code>'+ROOT+'</code><div id="audres" style="margin-top:6px"></div><div style="margin-top:6px">built in your browser from the sample pages. it is not posted on-chain.</div>';
+  $('#audit').addEventListener('click',function(){
+    var okc=0;KEPT.forEach(function(id,ix){var leaf=sha(recJSON(RECEIPTS[id]));if(fold(leaf,pathFor(ix))===ROOT)okc++});
+    $('#audres').innerHTML='<span style="color:'+(okc===KEPT.length?'var(--ok)':'var(--ember)')+'">'+okc+' of '+KEPT.length+' leaves rebuilt from their receipts fold to this root</span>';
+  });
+})();
+function renderProof(){
+  var id=curPid,i=PAGES.findIndex(function(p){return p.pid===id});
+  $$('#pchips .btnl').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-id')===id?'true':'false')});
+  var box=$('#psteps'),fin=$('#pfinal');
+  if(i<0){box.innerHTML='<div class="stp"><span class="i">–</span><div><h4>no such page</h4><div class="d">Ids look like p-0001 to p-'+pad(PAGES.length)+'.</div></div></div>';fin.className='final no';fin.textContent='nothing to verify';$('#tamper').hidden=true;return}
+  $('#tamper').hidden=false;
+  var p=PAGES[i],r=RES[i];
+  if(!r.kept){
+    box.innerHTML='<div class="stp"><span class="i">–</span><div><h4>no receipt for '+id+'</h4><div class="d">'+esc(p.url)+'<br>Dropped: '+esc(r.reason)+'. Only kept pages get a receipt and a leaf.</div></div><span class="res no">dropped</span></div>';
+    fin.className='final no';fin.textContent='this page is not in the epoch, so there is nothing to prove';$('#tamper').hidden=true;return}
+  var text=p.text;if(tampered){text=text.charAt(0)===text.charAt(0).toLowerCase()?text.charAt(0).toUpperCase()+text.slice(1):text.charAt(0).toLowerCase()+text.slice(1)}
+  var rec=RECEIPTS[id],h1=sha(text),m1=h1===rec.sha256;
+  var rec2={id:rec.id,url:rec.url,sha256:h1,tokens:rec.tokens,novel:rec.novel,score:rec.score,spider:rec.spider,ts:rec.ts};
+  var leaf=sha(recJSON(rec2)),idx=KEPT.indexOf(id),path=pathFor(idx),root=fold(leaf,path),m4=root===ROOT,leafOk=leaf===LEAVES[idx];
+  var pretty='{\n  "id": "'+rec2.id+'",\n  "url": "'+rec2.url+'",\n  "sha256": "'+sh(rec2.sha256)+'",\n  "tokens": '+rec2.tokens+', "novel": '+rec2.novel+', "score": '+rec2.score+',\n  "spider": "'+rec2.spider+'", "ts": '+rec2.ts+'\n}';
+  var run=leaf,pathHtml=path.map(function(s){run=s.side==='R'?sha(run+s.h):sha(s.h+run);return '<div><b>'+s.side+'</b><span title="'+s.h+'">'+sh(s.h)+'</span><span style="color:var(--dim)">→ '+sh(run)+'</span></div>'}).join('');
+  function row(n,t,d,ok,lab){return '<div class="stp"><span class="i">'+n+'</span><div><h4>'+t+'</h4><div class="d">'+d+'</div></div><span class="res '+(ok?'ok':'no')+'">'+lab+'</span></div>'}
+  box.innerHTML=
+    row(1,'text → sha256','<code title="'+h1+'">'+sh(h1)+'</code> re-hashed from the page text<br>receipt says <code title="'+rec.sha256+'">'+sh(rec.sha256)+'</code>',m1,m1?'✓ match':'✗ differs')+
+    row(2,'receipt → leaf','<pre class="recpre">'+esc(pretty)+'</pre>leaf <code title="'+leaf+'">'+sh(leaf)+'</code>'+(leafOk?'':'<br>sealed leaf was <code>'+sh(LEAVES[idx])+'</code>'),leafOk,leafOk?'✓ match':'✗ differs')+
+    row(3,'merkle path','<div class="path">'+pathHtml+'</div>',true,path.length+' hops')+
+    row(4,'root','computed <code title="'+root+'">'+sh(root)+'</code><br>sealed <code title="'+ROOT+'">'+sh(ROOT)+'</code>',m4,m4?'✓ match':'✗ differs');
+  if(m1&&m4){fin.className='final ok';fin.textContent=id+' is part of sample epoch 0001. text, receipt and path all check out.'}
+  else{fin.className='final no';fin.textContent='mismatch. the text no longer hashes to the receipt, so the path cannot reach the sealed root.'}
+  var tb=$('#tamper');tb.setAttribute('aria-pressed',tampered?'true':'false');tb.textContent=tampered?'restore the text':'change one character of the text';
+}
+function openProof(id){curPid=id;pidEl.value=id;tampered=false;renderProof();showView('proof')}
+pidEl.addEventListener('input',function(){curPid=pidEl.value.trim().toLowerCase();tampered=false;renderProof()});
+$('#pchips').addEventListener('click',function(e){var b=e.target.closest('.btnl');if(b){curPid=b.getAttribute('data-id');pidEl.value=curPid;tampered=false;renderProof()}});
+$('#tamper').addEventListener('click',function(){tampered=!tampered;renderProof()});
+renderProof();
+
+/* ---------- spawn ---------- */
+var sname=$('#sname'),shost=$('#shost'),sg=$('#sigil').getContext('2d');
+function spawn(){
+  var nm=sname.value.toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,16)||'spider';
+  var host=shost.value.toLowerCase().replace(/^https?:\/\//,'').replace(/[^a-z0-9.\-]/g,'').slice(0,60)||'docs.example.org';
+  var h=sha('spider:'+nm),id='sp-'+h.slice(0,8);
+  var cfg='{\n  "id": "'+id+'",\n  "name": "'+nm+'",\n  "host": "'+host+'",\n  "browser": "chromium, headless",\n  "rate": "1 visit / host / 5 s",\n  "robots": "obey",\n  "on_bot_check": "drop host"\n}';
+  $('#sjson').textContent=cfg;$('#scmd').textContent='arachne spawn --name '+nm+' --host '+host;
+  sg.fillStyle='#0a0d10';sg.fillRect(0,0,98,98);
+  for(var y=0;y<5;y++){for(var x=0;x<5;x++){var xi=x<3?x:4-x,bit=parseInt(h.charAt(y*3+xi),16)&8;sg.fillStyle=bit?((x+y)%2?'#ff7a2f':'#e9eef0'):'#141a1f';sg.fillRect(14+x*14,14+y*14,12,12)}}
+}
+sname.addEventListener('input',spawn);shost.addEventListener('input',spawn);spawn();
+var sc=$('#scopy');sc.addEventListener('click',function(){copyText($('#scmd').textContent,sc,'copy')});
+$('#nest2').innerHTML=NEST.map(function(n){return '<tr><td>'+n.n+'</td><td style="color:var(--dim)">'+n.ch+'</td><td class="st-z">offline</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>'}).join('');
+
+/* ---------- manual ---------- */
+$('#manual').innerHTML=
+'<b>ARACHNE(1)</b>                       Nest Manual                       <b>ARACHNE(1)</b>\n\n'+
+'<b>NAME</b>\n    arachne — a provable crawl of the crypto web, and the model pretrained on it.\n\n'+
+'<b>PIPELINE</b>\n    crawl → gate → dedupe → novelty → tokenize → receipt → seal → export → pretrain\n\n'+
+'<b>DESCRIPTION</b>\n'+
+'    <i>crawl</i>     Spiders are real headless Chromium. One polite visit per host every\n             few seconds, robots.txt obeyed, and a host is dropped at the first\n             bot check. The frontier prefers the hosts read least, so coverage\n             spreads.\n'+
+'    <i>gate</i>      A page is kept only if it is long enough (30+ words) and actually\n             about crypto (3+ crypto terms).\n'+
+'    <i>dedupe</i>    A page whose text hash was already read is dropped.\n'+
+'    <i>novelty</i>   The page is cut into 5-word shingles and compared with everything\n             already read. Its novel tokens are the share of it that is new.\n             Under 35% new, it is rejected as a near-duplicate.\n'+
+'    <i>receipt</i>   {url, sha256(text), tokens, novel, score, spider, ts}. The\n             receipt hash is a leaf.\n'+
+'    <i>seal</i>      Leaves are hash-chained as they land, and merkle-rooted per epoch.\n             A Solana program stores one root per epoch.\n'+
+'    <i>rewards</i>   An epoch’s share is split by novel tokens × relevance. Re-reading\n             known text earns nothing.\n'+
+'    <i>nephila</i>   The tokenizer is trained on the crawl, then nephila is pretrained\n             from scratch on the export.\n\n'+
+'<b>API</b>\n    /v1/web           the dataset as a graph of pages and links\n    /v1/pages/:id     one page’s text, as nephila will read it\n    /v1/proof/:id     receipt, leaf, merkle path and root for one page\n\n'+
+'<b>COMMANDS</b>\n    arachne tokenizer   train the BPE tokenizer on the crawl\n    arachne train       pretrain nephila on the export\n    arachne spawn       start a spider\n\n'+
+'<b>STATUS</b>\n    The crawler is not switched on yet. Everything interactive on this page\n    runs on 12 sample pages inside your browser, and is marked demonstration.\n\n'+
+'<b>arachne 0.1</b>                                                        <b>ARACHNE(1)</b>';
+
+/* ---------- main loop ---------- */
+function drawAll(){
+  if(curView==='web'){updateScan(clock);renderLog(clock);WEB.draw(clock)}
+  else if(curView==='spiders')drawWall(clock);
+}
+function boot(){
+  if(rm){clock=NEV*T-.2;playing=false;$('#play').textContent='replay: off';$('#play').setAttribute('aria-pressed','false')}
+  var hv=(location.hash||'').slice(1);showView(VIEWS.indexOf(hv)>=0?hv:'web',true);
+  window.addEventListener('resize',function(){WEB.fit();drawAll()});
+  if(rm){SC.logN=-1;drawAll();return}
+  var last=0;
+  function frame(t){
+    requestAnimationFrame(frame);
+    if(document.hidden){last=t;return}
+    var dt=Math.min(.05,(t-last)/1000||0);last=t;
+    if(playing){clock+=dt;if(clock>=LOOP){clock=0;SC.logN=-1;SC.i=-1}}
+    drawAll();
+  }
+  requestAnimationFrame(frame);
+}
+window.__arachne={sha:sha,PAGES:PAGES,RES:RES,KEPT:KEPT,ROOT:ROOT,setClock:function(v){clock=v;playing=false;SC.logN=-1;drawAll()},show:showView};
+boot();
+})();
+</script></body></html>
