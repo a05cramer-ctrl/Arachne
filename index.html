@@ -367,7 +367,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
       <div class="ca"><small>CA</small><code id="ca-text" class="empty">drops at launch</code><button class="tb" id="ca-copy" type="button">copy</button></div>
     </div>
     <div class="webwrap"><canvas id="web-cv" aria-label="a web with spiders reading pages"></canvas>
-      <div class="wleg"><span><i style="background:var(--ok)"></i>kept</span><span><i style="background:var(--seen)"></i>read, dropped</span><span><i style="border:1.5px solid var(--ember)"></i>link not read yet</span><span class="demo">demonstration</span></div></div>
+      <div class="wleg"><span><i style="background:var(--ok)"></i>kept</span><span><i style="background:var(--seen)"></i>read, dropped</span><span><i style="border:1.5px solid var(--ember)"></i>link not read yet</span><span class="demo">feed</span></div></div>
     <div class="nest">
       <div class="nbar"><span><b id="n-awake">0/7</b> spiders awake</span><span><b>0</b> urls queued</span><span>tokenizer <b>not trained</b></span><span style="margin-left:auto">epoch <i class="meter"><i id="ep-m"></i></i> <span id="ep-t">0/12</span></span></div>
       <div class="tbl"><table><thead><tr><th>pid</th><th>spider</th><th>s</th><th>chapter</th><th class="n">pages</th><th class="n">novel</th><th class="n">rej</th><th>url</th></tr></thead><tbody id="tbody"></tbody></table></div>
@@ -375,7 +375,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
   </div>
   <div class="right">
     <div class="scanbox">
-      <div class="scanhd"><i class="dot on"></i><span class="nm" id="s-sp">argiope</span><span id="s-meta"></span><span class="u" id="s-url"></span><span class="demo" style="margin-left:auto">demonstration</span></div>
+      <div class="scanhd"><i class="dot on"></i><span class="nm" id="s-sp">argiope</span><span id="s-meta"></span><span class="u" id="s-url"></span><span class="demo" style="margin-left:auto">feed</span></div>
       <div class="scan">
         <div class="pagewrap" id="pagewrap"><div class="pageinner" id="pageinner"></div><div class="sline" id="sline" hidden><span id="sl-t"></span></div><div class="idle" id="idle">a spider is on its way</div>
 <div class="thumb"><small>preview · sample</small><canvas id="thumb" width="264" height="156"></canvas></div></div>
@@ -399,7 +399,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
 
 <!-- SPIDERS -->
 <section class="view" id="v-spiders" aria-label="spiders">
-  <div class="intro"><p style="margin:0 0 8px">The wall of screens streams from a running nest. This page replays a sample session, drawn in your browser from 12 sample pages.</p><span class="demo">demonstration</span></div>
+  <div class="intro"><p style="margin:0 0 8px">The wall of screens streams from a running nest. This page replays a sample session, drawn in your browser from 12 sample pages.</p><span class="demo">feed</span></div>
   <div id="wall" style="display:contents"></div>
 </section>
 
@@ -414,7 +414,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
   <div class="col">
     <div class="ph"><b>ask what she has read</b><span class="sp">retrieval with citations · no weights yet</span></div>
     <form class="askrow" id="askf"><input class="f" id="askq" placeholder="how does the challenge window work?" autocomplete="off" spellcheck="false" aria-label="question"><button class="btnp" type="submit">ask</button></form>
-    <p class="note" style="padding:0 12px;margin:0 0 10px"><span class="demo">demonstration</span> &nbsp;searches the 9 kept sample pages in your browser.</p>
+    <p class="note" style="padding:0 12px;margin:0 0 10px"><span class="demo">feed</span> &nbsp;searches the 9 kept sample pages in your browser.</p>
     <div class="ans" id="ans"></div>
   </div>
   <div class="col">
@@ -432,7 +432,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
 <!-- ATLAS -->
 <section class="view" id="v-atlas" aria-label="atlas">
   <div class="col">
-    <div class="ph"><b>the web she has read</b><span class="demo sp">demonstration</span></div>
+    <div class="ph"><b>the web she has read</b><span class="demo sp">feed</span></div>
     <div class="gcv" id="atlas-wrap"><canvas id="atlas-cv" aria-label="graph of sample pages and links"></canvas><div class="tip" id="tip" hidden></div></div>
   </div>
   <div class="col">
@@ -467,7 +467,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
 <!-- SPAWN -->
 <section class="view" id="v-spawn" aria-label="spawn">
   <div class="col">
-    <div class="ph"><b>spawn a spider</b><span class="sp"><span class="demo">demonstration</span></span></div>
+    <div class="ph"><b>spawn a spider</b><span class="sp"><span class="demo">feed</span></span></div>
     <p class="note pad">Name it and point it at a site. It reads that host only, obeys robots.txt and stops at the first bot check. Spawning is not open yet, so this builds the config and nothing else.</p>
     <div class="spf"><input class="f" id="sname" value="ada" maxlength="16" autocomplete="off" spellcheck="false" aria-label="spider name"><input class="f" id="shost" value="docs.example.org" autocomplete="off" spellcheck="false" aria-label="host"></div>
     <div class="spo"><canvas id="sigil" width="98" height="98" aria-label="spider sigil"></canvas><div style="min-width:0"><pre class="json" id="sjson"></pre><div class="cmdl"><code id="scmd"></code><button class="btnl" id="scopy" type="button">copy</button></div></div></div>
@@ -489,7 +489,7 @@ button.ln:hover{background:rgba(255,122,47,.07)}
       <div class="rcard"><div class="tp"><span>03</span><b>THEN</b></div><h3>nephila</h3><ul><li>tokenizer trained on the crawl</li><li>first pretraining run, from random weights</li><li>weights public, dataset root inside the checkpoint</li></ul></div>
       <div class="rcard"><div class="tp"><span>04</span><b>LATER</b></div><h3>the open nest</h3><ul><li>anyone can run a spider on their own machine</li><li>false receipts are rejected by the other spiders</li><li>a bigger nephila every time the dataset doubles</li></ul></div>
     </div>
-    <div class="fund"><h2>what pays for it</h2><p>Spider compute is paid from creator fees. The split is posted at launch. Nothing on this page is running yet, and everything marked demonstration runs on 12 sample pages inside your browser.</p></div>
+    <div class="fund"><h2>what pays for it</h2><p>Spider compute is paid from creator fees. The split is posted at launch. Nothing on this page is running yet, and everything marked FEED runs on 12 sample pages inside your browser.</p></div>
   </div>
 </section>
 
@@ -1095,7 +1095,7 @@ $('#manual').innerHTML=
 '    <i>nephila</i>   The tokenizer is trained on the crawl, then nephila is pretrained\n             from scratch on the export.\n\n'+
 '<b>API</b>\n    /v1/web           the dataset as a graph of pages and links\n    /v1/pages/:id     one page’s text, as nephila will read it\n    /v1/proof/:id     receipt, leaf, merkle path and root for one page\n\n'+
 '<b>COMMANDS</b>\n    arachne tokenizer   train the BPE tokenizer on the crawl\n    arachne train       pretrain nephila on the export\n    arachne spawn       start a spider\n\n'+
-'<b>STATUS</b>\n    The crawler is not switched on yet. Everything interactive on this page\n    runs on 12 sample pages inside your browser, and is marked demonstration.\n\n'+
+'<b>STATUS</b>\n    The crawler is not switched on yet. Everything interactive on this page\n    runs on 12 sample pages inside your browser, and is marked FEED.\n\n'+
 '<b>arachne 0.1</b>                                                        <b>ARACHNE(1)</b>';
 
 /* ---------- main loop ---------- */
