@@ -1,1 +1,1 @@
-window.ARACHNE_CFG={NAME:"Arachne",TICKER:"ARACHNE",CA:"",CHAIN:"solana",PAD:"pumpfun",X:"",BUY:"",CHART:""};
+window.ARACHNE_CFG={NAME:"Arachne",TICKER:"ARACHNE",CA:"2HoWid7qkY4jkwRhCN2SjJHsLtyrnmd6uyEmv18jpump",CHAIN:"solana",PAD:"pumpfun",X:"https://x.com/arachnenet",BUY:"https://pump.fun/coin/2HoWid7qkY4jkwRhCN2SjJHsLtyrnmd6uyEmv18jpump",CHART:"https://gmgn.ai/sol/token/2HoWid7qkY4jkwRhCN2SjJHsLtyrnmd6uyEmv18jpump"};
